@@ -1,6 +1,7 @@
 ﻿using Apps.Devlosys.Core;
 using Apps.Devlosys.Core.Events;
 using Apps.Devlosys.Core.Mvvm;
+using Apps.Devlosys.Infrastructure;
 using Apps.Devlosys.Infrastructure.Models;
 using Apps.Devlosys.Resources.I18N;
 using Apps.Devlosys.Services.Interfaces;
@@ -10,7 +11,9 @@ using Prism.Ioc;
 using Prism.Services.Dialogs;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 
@@ -41,7 +44,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         #endregion
 
-        
         #region Properties
 
         private string _snr;
@@ -68,9 +70,14 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         #region Command handler
 
-        private void OnScanCommandHandler()
+        private async void OnScanCommandHandler()
         {
-            LoadPositions();
+            Positions.Clear();
+
+            await LoadPositions();
+
+            OnFocusRequested("SNR");
+            SNR = string.Empty;
         }
 
         #endregion
@@ -86,22 +93,17 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         #region Public & private methodes
 
-        private async void LoadPositions()
+        private async Task LoadPositions()
         {
-            Positions.Clear();
-
-            // Get Data from iTAC
             var ppResult = await _api.GetPanelSNStateAsync(_session.Station, SNR);
-
-            // Check if the result is null or empty  
+ 
             if (ppResult == null || ppResult.Count == 0)
             {
                 string error = $"There is no panel record found for this SN [{SNR}]. An empty list is returned: count {ppResult?.Count}";
                 _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
                 return;
             }
-
-            // Check if the result indicates a single PCB  
+ 
             if (ppResult.Count == 1)
             {
                 string error = "PCB does not belong to Panel anymore, this configuration is not allowed! Part will not be booked.";
@@ -118,7 +120,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                 {
 #if RELEASE
-                    StartBooking(position.SerialNumber);
+                    await StartBookingAsync(position.SerialNumber);
 #endif
                 }
             }
@@ -137,9 +139,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     );
                 }
             }
-
-            OnFocusRequested("SNR");
-            SNR = string.Empty;
         }
 
         private bool StartBooking(string snr)
@@ -171,6 +170,38 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
+        // Call the asynchronous version of UploadState
+        private async Task<bool> StartBookingAsync(string snr)
+        {
+            
+            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, new string[] { "SERIAL_NUMBER_STATE" }, null);
+            Log.Information($"Upload SN {snr} for station {_session.Station} done, with Result {result}");
+
+            if (result)
+            {
+                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, new string[] { "PART_DESC", "SERIAL_NUMBER", "PART_NUMBER" });
+
+                if (result)
+                {
+                    Log.Information($"SN {snr} booked successfully : {outResults[0]} - {outResults[1]} - {outResults[2]}");
+                }
+                else
+                {
+                    string error = $"SN Info for {snr} could not be retrieved ! error : {await _api.GetErrorTextAsync(codeInfo)}" ;
+                    _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
+                }
+
+                return true;
+            }
+            else
+            {
+                string error = await _api.GetErrorTextAsync(code);
+                _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
+                Log.Error($"Upload SN {snr} for station {_session.Station} Failed, error : {error}");
+                return false;
+            }
+        }
+
         public void OnLoaded()
         {
             OnFocusRequested("SNR");
@@ -185,11 +216,4 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
     }
 
-    public enum iTAC_Check_SN_RSLT_ENUM
-    {
-        PART_OK    = 0,
-        PART_FAIL  = 1,
-        PART_SCRAP = 2,
-        Unknown    = -1,
-    }
 }

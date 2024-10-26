@@ -17,11 +17,19 @@ namespace Apps.Devlosys.Services.Interfaces
 
         bool CheckSerialNumberState(string station, string snr, out string state, out string error);
 
+        Task<(bool, string state, string error)> CheckSerialNumberStateAsync(string station, string snr);
+
         bool UploadState(string station, string snr, string[] inKeys, string[] inValues, out string[] results, out int code);
 
         bool UploadState(string station, string snr, long bookDate, out int code);
 
+        Task<(bool, string[], int)> UploadStateAsync(string station, string snr, string[] inKeys, string[] inValues);
+
+        Task<(bool, int)> UploadStateAsync(string station, string snr, long bookDate);
+
         bool GetSerialNumberInfo(string station, string snr, string[] inKeys, out string[] results, out int code);
+
+        Task<(bool, string[], int)> GetSerialNumberInfoAsync(string station, string snr, string[] inKeys);
 
         bool GetBinData(string bin, out string[] data, out int code);
 
@@ -39,15 +47,23 @@ namespace Apps.Devlosys.Services.Interfaces
 
         int SetUserWhoMan(string station, string srn, string username);
 
+        Task<int> SetUserWhoManAsync(string station, string srn, string username);
+
         //void StartMES(string WorkCenter, string productNumber, string eventDateTime, string serialNumber, string Qte, string CycleTime, AppSession _session);
         Task<(string status, string reason)> StartMESAsync(string WorkCenter, string productNumber, string eventDateTime,string serialNumber, 
               string Qte, string CycleTime, AppSession _session);
 
         public int VerifyMESAttr(string station, string serialNumber);
 
+        Task<int> VerifyMESAttrAsync(string station, string serialNumber);
+
         public int AppendMESAttr(string station, string serialNumber);
 
+        Task<int> AppendMESAttrAsync(string station, string serialNumber);
+
         string GetErrorText(int result);
+
+        Task<string> GetErrorTextAsync(int result);
 
         string[] GetGroups();
     }

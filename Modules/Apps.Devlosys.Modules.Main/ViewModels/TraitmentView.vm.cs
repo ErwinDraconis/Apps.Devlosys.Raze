@@ -13,13 +13,11 @@ using Prism.Ioc;
 using Prism.Services.Dialogs;
 using Serilog;
 using System;
-using System.Collections;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.IO.Ports;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -233,7 +231,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     {
                         case TraitementEnum.BOOKING:
 
-                            ProcessBookingAsync();
+                            await ProcessBookingAsync();
                             break;
 
                         case TraitementEnum.LABLING:
@@ -269,7 +267,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
                                     if (result == ButtonResult.Yes)
                                     {
-                                        await MesSavingProduct(SNR);
+                                        await MesSavingProductAsync(SNR);
                                     }
                                     else if (result == ButtonResult.No)
                                     {
@@ -314,7 +312,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
                         if (_session.IsMESActive && TraitementOption != TraitementEnum.MES)
                         {
-                            await MesSavingProduct(SNR);
+                            await MesSavingProductAsync(SNR);
                         }
                     }
                 }
@@ -343,88 +341,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 SNR = string.Empty;
                 OnFocusRequested("SNR");
             }
-        }
-
-        private async void ProcessBookingAsync()
-        {
-            // 1: Check if booking is for Board only (board in panel not allowed) 
-            var ppResult = await _api.GetPanelSNStateAsync(_session.Station, SNR);
-
-            if (ppResult != null || ppResult.Count > 1)
-            {
-                string error = "Panel Booking is not allowed in this menu.";
-                _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
-                PrintResult(false, "Panel Booking is not allowed in this menu.", "Please scan SN of a PCB only");
-                return;
-            }
-
-            // 2: Check SN State  
-            string errCode = string.Empty;
-            string errDesc = string.Empty;
-            var pcbState   = await Task.Run(()=> CheckPcb(SNR, out errCode, out errDesc));
-            
-            if (!pcbState)
-            {
-                // iTAC check failed : lock the app and show Error Dialog, then exit.
-                _dialogService.ShowDialog(
-                    DialogNames.UnterlockFailDialog,
-                    new DialogParameters($"title=iTAC Check - ERROR DETECTED &SNR={SNR}&Description=Interlock in iTAC failed with error code [{errCode}] : {errDesc},&CallerWindow=TraitmentView")
-                );
-                PrintResult(false, $"iTAC check for {SNR} : Failed", $"Error code [{errCode}]", $"Error Descirption: {errDesc}");
-                return;
-            }
-
-            // 3: Verify if iTAC attributes exist  
-            var isAttrAppended = await Task.Run(()=> _api.VerifyMESAttr(_session.Station, SNR));
-            
-            // 3.1 - Attribute exists, proceed with iTAC booking only, then exit.  
-            if (isAttrAppended == 0)
-            {
-                await Task.Run(()=> StartBooking(SNR));
-                return;
-            }
-
-            // 3.2 - Attribute does not exist, append attributes and perform MES booking
-            var appendMesAttrRslt = await Task.Run(() => _api.SetUserWhoMan(_session.Station, SNR, _session.UserName));
-            appendMesAttrRslt    |= await Task.Run(() => _api.AppendMESAttr(_session.Station, SNR));
-            if (appendMesAttrRslt != 0)
-            {
-                //PrintResult(false, $"MES Attributes not added correctly for SN {SNR} : Please re-try again");
-                //return;
-            }
-
-            // Set up for retry logic for MES booking  
-            bool retry = true;
-            while (retry)
-            {
-                // Attempt MES Booking  
-                if (await MesSavingProduct(SNR)) // If MES booking is successful, proceed with iTAC booking  
-                {
-                    await Task.Run(() => StartBooking(SNR));
-                    return;
-                    
-                }
-                else // MES booking failed, prompt the user to retry or cancel  
-                {  
-                    ButtonResult check = _dialogService.ShowDialog(
-                        "Re-try MES booking",
-                        new DialogParameters($"title=MES Booking Failed &message=MES booking for {SNR} failed. Do you want to retry?")
-                    );
-
-                    if (check == ButtonResult.No)
-                    {
-                        PrintResult(false, $"MES booking for {SNR} : Failed");
-                        return;
-                    }
-                    else
-                    {
-                        retry = false; // Allow only one retry more  
-                    }
-                }
-            }
-
-            // If all retries fail, log the final result  
-            PrintResult(false, $"MES booking for {SNR} : Failed after retry");
         }
 
         #endregion
@@ -468,6 +384,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
+      
         private void CheckPreviousStepMLS(string snr)
         {
             if (_session.IsFVTInterlock)
@@ -535,7 +452,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return false;
             }
         }
-
 
         private bool StartLabling(string snr)
         {
@@ -625,75 +541,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
             return result;
         }
-
-        private async Task<bool> MesSavingProduct(string snr)
-        {
-            string lastSnr = (_session.LabelType == LabelTypeEnum.TG01) ? snr.Between("_", "_") : snr.Substring(4, 10).ToString();
-            int gg = 0;
-
-            var data = GetDataForLabel(lastSnr);
-            if (data == null)
-            {
-                return false;
-            }
-
-            string refrence = Regex.Replace(data.FinGood, "^0*", "");
-            if (data.Shipping.ToUpper() != "Y")
-            {
-                return true;
-            }
-            
-            if (_session.IsMESActive)
-            {
-                if (!_session.IsItacInterlock)
-                {
-                    var result = await StartMESWithDelay(snr, refrence, 5.0);
-                    if (result.status == "fail")
-                    {
-                        _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, result.reason, OkDialogType.Warning);
-                        return false;
-                    }
-                }
-                else if (gg == 0)
-                {
-                    var result = await StartMESNow(snr, refrence);
-                    if (result.status == "fail")
-                    {  
-                        _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, result.reason, OkDialogType.Warning);
-                        return false;
-                    }
-                }
-                else
-                {
-                    _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, string.Format(TraitmentResource.BlockedProductMessage, snr), OkDialogType.Warning);
-                    return false;
-                }
-            }
-            else
-            {
-                _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, TraitmentResource.MESDisableMessage, OkDialogType.Warning);
-                return false; // MES is inactive 
-            }
-
-            return true;
-        }
-
-        private async Task<(string status, string reason)> StartMESWithDelay(string snr, string reference, double delayMinutes)
-        {
-            string date = DateTime.Now.AddMinutes(delayMinutes).ToString(_session.DateFormat, CultureInfo.InvariantCulture);
-            string workcenter = _session.WorkCenter;
-
-            return await _api.StartMESAsync(workcenter, reference, date, snr, "1", "10", _session);
-        }
-
-        private async Task<(string status, string reason)> StartMESNow(string snr, string reference)
-        {
-            string date = DateTime.Now.ToString(_session.DateFormat, CultureInfo.InvariantCulture);
-            string workcenter = _session.WorkCenter;
-
-            return await _api.StartMESAsync(workcenter, reference, date, snr, "1", "10", _session);
-        }
-
 
         private void HandelFVT(string snr)
         {
@@ -946,6 +793,213 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             _eventAggregator.GetEvent<ConfigChangedEvent>().Unsubscribe(@token);
         }
 
+        #endregion
+
+        #region Async methodes
+
+        private async Task ProcessBookingAsync()
+        {
+            // 1: Check if booking is for Board only (board in panel not allowed) 
+            var panelResult = await _api.GetPanelSNStateAsync(_session.Station, SNR);
+
+            if (panelResult != null && panelResult.Count > 1)
+            {
+                ShowErrorDialog("Panel Booking is not allowed in this menu, Please scan SN of a PCB only.");
+                return;
+            }
+
+            // 2: Check SN State  
+            var (pcbState, errCode, errDesc) = await CheckPcbAsync(SNR);
+            if (!pcbState)
+            {
+                ShowInterlockFailDialog(errCode, errDesc);
+                return;
+            }
+
+            // 3: Verify if iTAC attributes exist  
+            var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SNR);
+            if (isAttrAppended == 0) // Attr exist
+            {
+                await StartBookingAsync(SNR);
+                return;
+            }
+
+            // 3.2 - Attribute does not exist, append attributes and perform MES and iTAC booking
+            var appendMesAttrRslt  = await _api.SetUserWhoManAsync(_session.Station, SNR, _session.UserName);
+            appendMesAttrRslt     |= await _api.AppendMESAttrAsync(_session.Station, SNR);
+            if (appendMesAttrRslt != 0)
+            {
+                //PrintResult(false, $"MES Attributes not added correctly for SN {SNR} : Please re-try again");
+                //return;
+            }
+
+            // Set up for retry logic for MES booking  
+            if (await AttemptMesBookingAsync(SNR))
+            {
+                await StartBookingAsync(SNR);
+            }
+            else
+            {
+                PrintResult(false, $"MES booking for {SNR} : Failed after retry");
+            }
+        }
+
+        private async Task<bool> AttemptMesBookingAsync(string snr)
+        {
+            bool retry = true;
+            while (retry)
+            {
+                // Attempt MES Booking  
+                if (await MesSavingProductAsync(snr))
+                {
+                    return true; // Successful booking, proceed
+                }
+
+                // MES booking failed, prompt the user to retry or cancel  
+                var check = _dialogService.ShowDialog(
+                    "Re-try MES booking",
+                    new DialogParameters($"title=MES Booking Failed &message=MES booking for {snr} failed. Do you want to retry?")
+                );
+
+                if (check == ButtonResult.No)
+                {
+                    PrintResult(false, $"MES booking for {snr} : Failed");
+                    return false;
+                }
+
+                retry = false; // Allow only one retry more  
+            }
+
+            return false; // If all retries fail
+        }
+
+        public async Task<(bool success, string errCode, string errorDescription)> CheckPcbAsync(string snr)
+        {
+            (bool result, string errorCode, string errorDescription) = await _api.CheckSerialNumberStateAsync(_session.Station, snr);
+
+            if (result)
+            {
+                return (true, string.Empty, string.Empty);
+            }
+            else
+            {
+                string errorDesc = await _api.GetErrorTextAsync(int.Parse(errorCode));
+                return (false, errorCode, errorDesc);
+            }
+        }
+
+        private async Task<bool> StartBookingAsync(string snr)
+        {
+            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
+
+            if (result)
+            {
+                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER"]);
+
+                if (result)
+                {
+                    PrintResult(true, $"LAST SN : {snr}", $"STATION NO : {_session.Station}", $"REFERENCE : {outResults[2]}", $"PRODUIT : {outResults[0]}");
+                }
+                else
+                {
+                    string error = await _api.GetErrorTextAsync(codeInfo);
+                    _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
+                    PrintResult(false, $"Get Serial Number Info for SN : {snr} Faild", $"Error code {codeInfo}", $"Error Description {error}");
+                }
+
+                return true;
+            }
+            else
+            {
+                string error = _api.GetErrorText(code);
+                _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
+                return false;
+            }
+        }
+
+        private async Task<bool> MesSavingProductAsync(string snr)
+        {
+            string lastSnr = (_session.LabelType == LabelTypeEnum.TG01) ? snr.Between("_", "_") : snr.Substring(4, 10).ToString();
+            int gg = 0;
+
+            var data = GetDataForLabel(lastSnr);
+            if (data == null)
+            {
+                return false;
+            }
+
+            string refrence = Regex.Replace(data.FinGood, "^0*", "");
+            if (data.Shipping.ToUpper() != "Y")
+            {
+                return true;
+            }
+
+            if (_session.IsMESActive)
+            {
+                if (!_session.IsItacInterlock)
+                {
+                    var result = await StartMESWithDelayAsync(snr, refrence, 5.0);
+                    if (result.status == "fail")
+                    {
+                        _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, result.reason, OkDialogType.Warning);
+                        return false;
+                    }
+                }
+                else if (gg == 0)
+                {
+                    var result = await StartMESNowAsync(snr, refrence);
+                    if (result.status == "fail")
+                    {
+                        _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, result.reason, OkDialogType.Warning);
+                        return false;
+                    }
+                }
+                else
+                {
+                    _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, string.Format(TraitmentResource.BlockedProductMessage, snr), OkDialogType.Warning);
+                    return false;
+                }
+            }
+            else
+            {
+                _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, TraitmentResource.MESDisableMessage, OkDialogType.Warning);
+                return false; // MES is inactive 
+            }
+
+            return true;
+        }
+
+        private async Task<(string status, string reason)> StartMESWithDelayAsync(string snr, string reference, double delayMinutes)
+        {
+            string date = DateTime.Now.AddMinutes(delayMinutes).ToString(_session.DateFormat, CultureInfo.InvariantCulture);
+            string workcenter = _session.WorkCenter;
+
+            return await _api.StartMESAsync(workcenter, reference, date, snr, "1", "10", _session);
+        }
+
+        private async Task<(string status, string reason)> StartMESNowAsync(string snr, string reference)
+        {
+            string date = DateTime.Now.ToString(_session.DateFormat, CultureInfo.InvariantCulture);
+            string workcenter = _session.WorkCenter;
+
+            return await _api.StartMESAsync(workcenter, reference, date, snr, "1", "10", _session);
+        }
+
+        private void ShowErrorDialog(string message)
+        {
+            _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, message, OkDialogType.Error);
+            PrintResult(false, message);
+        }
+
+        private void ShowInterlockFailDialog(string errCode, string errDesc)
+        {
+            _dialogService.ShowDialog(
+                DialogNames.UnterlockFailDialog,
+                new DialogParameters($"title=iTAC Check - ERROR DETECTED &SNR={SNR}&Description=Interlock in iTAC failed with error code [{errCode}] : {errDesc},&CallerWindow=TraitmentView")
+            );
+
+            PrintResult(false, $"iTAC check for {SNR} : Failed", $"Error code [{errCode}]", $"Error Description: {errDesc}");
+        }
         #endregion
     }
 }

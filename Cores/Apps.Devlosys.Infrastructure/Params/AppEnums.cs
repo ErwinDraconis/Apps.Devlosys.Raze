@@ -258,13 +258,14 @@ namespace Apps.Devlosys.Infrastructure
         [LocalizedDescriptionAttribute("UploadMethodFTPText", typeof(EnumsResource))] FTP
     }
 
-    public enum CheckPCBRsltEnum
+    public enum iTAC_Check_SN_RSLT_ENUM
     {
-        PartOK = 0,
-        partNotBookedInPreviousStep = -1,
-        FailPreviousStep = 1,
-        scrap = 2,
+        PART_OK    = 0,
+        PART_FAIL  = 1,
+        PART_SCRAP = 2,
+        Unknown    = -1,
     }
+
     #region App States Enum
 
     public enum AppStates { BLOCKED, NORMAL, }

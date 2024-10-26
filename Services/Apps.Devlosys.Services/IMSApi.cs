@@ -111,6 +111,21 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
         }
 
+        public async Task<(bool, string state, string error)> CheckSerialNumberStateAsync(string station, string snr)
+        {
+            return await Task.Run(() =>
+            {
+                string[] resultKeys = { "SERIAL_NUMBER_STATE", "ERROR_CODE" };
+
+                int result = imsapi.trCheckSerialNumberState(sessionContext, station, 2, 0, snr, "-1", resultKeys, out string[] outResults);
+
+                string state = outResults[0];
+                string error = outResults[1];
+
+                return (result == RES_OK, state, error);
+            });
+        }
+
         public bool UploadState(string station, string snr, string[] inKeys, string[] inValues, out string[] results, out int code)
         {
             var result = imsapi.trUploadState(sessionContext, station, 2, snr, "-1", 0, 0, -1L, 0f, inKeys, inValues, out string[] outResults);
@@ -127,6 +142,24 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
         }
 
+        public async Task<(bool, string[], int)> UploadStateAsync(string station, string snr, string[] inKeys, string[] inValues)
+        {
+            return await Task.Run(() =>
+            {
+                var result = imsapi.trUploadState(sessionContext, station, 2, snr, "-1", 0, 0, -1L, 0f, inKeys, inValues, out string[] outResults);
+                return (result == RES_OK, outResults, result);
+            });
+        }
+
+        public async Task<(bool, int)> UploadStateAsync(string station, string snr, long bookDate)
+        {
+            return await Task.Run(() =>
+            {
+                var result = imsapi.trUploadState(sessionContext, station, 2, snr, "-1", 0, 0, bookDate, -1f, null, null, out _);
+                return (result == RES_OK, result);
+            });
+        }
+
         public bool GetSerialNumberInfo(string station, string snr, string[] inKeys, out string[] results, out int code)
         {
             var result = imsapi.trGetSerialNumberInfo(sessionContext, station, snr, "-1", inKeys, out string[] outResults);
@@ -134,6 +167,15 @@ namespace Apps.Devlosys.Services
             code = result;
 
             return result == RES_OK;
+        }
+
+        public async Task<(bool, string[], int)> GetSerialNumberInfoAsync(string station, string snr, string[] inKeys)
+        {
+            return await Task.Run(() =>
+            {
+                var result = imsapi.trGetSerialNumberInfo(sessionContext, station, snr, "-1", inKeys, out string[] outResults);
+                return (result == RES_OK, outResults, result);
+            });
         }
 
         public bool GetStateForProductDeclaration(string station, string snr)
@@ -198,21 +240,21 @@ namespace Apps.Devlosys.Services
 
         public async Task<List<PanelPositions>> GetPanelSNStateAsync(string station, string snr)
         {
-            List<PanelPositions> ppRslt = new List<PanelPositions>();
+            List<PanelPositions> panelRslt = new List<PanelPositions>();
 
 #if DEBUG
             var fictiveNumberOfBoards = new Random().Next(10, 50);
             Random random = new Random();
             for (int i = 0; i < fictiveNumberOfBoards; i++)
             {
-                ppRslt.Add(new PanelPositions 
+                panelRslt.Add(new PanelPositions 
                     {
                         PositionNumber = i + 1,
                         SerialNumber = "99999_99999_9999", 
                         Status = random.Next(0, 7),
                     });
             }
-            return ppRslt;
+            return panelRslt;
 #endif
             int processLayer       = 2;
             int checkMultiBoard    = 1;
@@ -229,7 +271,7 @@ namespace Apps.Devlosys.Services
                 {
                     for (int i = 0; i < SnStateResultValues.Length; i += SnStateResultKeys.Length)
                     {
-                        ppRslt.Add(new PanelPositions
+                        panelRslt.Add(new PanelPositions
                         {
                             PositionNumber = int.Parse(SnStateResultValues[i]),
                             SerialNumber = SnStateResultValues[i + 1],
@@ -241,7 +283,7 @@ namespace Apps.Devlosys.Services
             });
                 
 
-            return ppRslt;
+            return panelRslt;
         }
 
         public int SetUserWhoMan(string station, string srn, string username)
@@ -253,6 +295,21 @@ namespace Apps.Devlosys.Services
                 ? 0
                 : int.Parse(results[1]);
         }
+
+        public async Task<int> SetUserWhoManAsync(string station, string srn, string username)
+        {
+            string[] attributeUploadKeys = new string[3] { "ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" };
+            string[] attributeUploadValues = new string[3] { "razeUser", $"{username} on : {DateTime.Now}", "0" };
+
+            return await Task.Run(() =>
+            {
+                int result = imsapi.attribAppendAttributeValues(sessionContext, station, 0, srn, "-1", -1L, 0, attributeUploadKeys, attributeUploadValues, out string[] results);
+
+                // Check the result and return the appropriate value
+                return result == RES_OK ? 0 : int.Parse(results[1]);
+            });
+        }
+
 
         /*public void StartMES(string WorkCenter, string productNumber, string eventDateTime, string serialNumber, string Qte, string CycleTime, AppSession _session)
         {
@@ -321,6 +378,20 @@ namespace Apps.Devlosys.Services
                 : int.Parse(results[1]);
         }
 
+        public async Task<int> VerifyMESAttrAsync(string station, string serialNumber)
+        {
+            string[] attributeCodeArray = { "MES_Booking" };
+            string[] attributeResultKeys = { "ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" };
+
+            return await Task.Run(() =>
+            {
+                int result = imsapi.attribGetAttributeValues(sessionContext, station, 0, serialNumber, null, attributeCodeArray, 0, attributeResultKeys, out string[] results);
+
+                return result != RES_OK ? -1 : int.Parse(results[1]);
+            });
+        }
+
+
         public int AppendMESAttr(string station, string serialNumber)
         {
             string[] attributeResultKeys = new string[3] { "ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" };
@@ -330,7 +401,20 @@ namespace Apps.Devlosys.Services
             return imsapi.attribAppendAttributeValues(sessionContext, station, 0, serialNumber, null, -1L, 1, attributeResultKeys, attributeUploadValues, out string[] results) == RES_OK
                 ? 0
                 : int.Parse(results[1]);
+        }
 
+        public async Task<int> AppendMESAttrAsync(string station, string serialNumber)
+        {
+            string[] attributeResultKeys = new string[3] { "ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" };
+            string[] attributeUploadValues = new string[3] { "MES_Booking", "1", "0" };
+
+            return await Task.Run(() =>
+            {
+                int result = imsapi.attribAppendAttributeValues(sessionContext, station, 0, serialNumber, null, -1L, 1, attributeResultKeys, attributeUploadValues, out string[] results);
+
+                // Check the result and return the appropriate value
+                return result == RES_OK ? 0 : int.Parse(results[1]);
+            });
         }
 
         public bool GetBinData(string bin, out string[] data, out int code)
@@ -371,6 +455,16 @@ namespace Apps.Devlosys.Services
 
             return errorText;
         }
+
+        public async Task<string> GetErrorTextAsync(int result)
+        {
+            return await Task.Run(() =>
+            {
+                imsapi.imsapiGetErrorText(sessionContext, result, out string errorText);
+                return errorText;
+            });
+        }
+
 
         public string[] GetGroups()
         {
