@@ -11,7 +11,6 @@ using Prism.Ioc;
 using Prism.Services.Dialogs;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -95,16 +94,16 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task LoadPositions()
         {
-            var ppResult = await _api.GetPanelSNStateAsync(_session.Station, SNR);
+            var panelsResult = await _api.GetPanelSNStateAsync(_session.Station, SNR);
  
-            if (ppResult == null || ppResult.Count == 0)
+            if (panelsResult == null || panelsResult.Count == 0)
             {
-                string error = $"There is no panel record found for this SN [{SNR}]. An empty list is returned: count {ppResult?.Count}";
+                string error = $"There is no panel record found for this SN [{SNR}]. An empty list is returned: count {panelsResult?.Count}";
                 _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
                 return;
             }
  
-            if (ppResult.Count == 1)
+            if (panelsResult.Count == 1)
             {
                 string error = "PCB does not belong to Panel anymore, this configuration is not allowed! Part will not be booked.";
                 _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
@@ -112,10 +111,10 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
 
             // populate the view first (so to let the user see which PCB is Ok and which is not)
-            Positions.AddRange(ppResult);
+            Positions.AddRange(panelsResult);
 
             // Loop through all PCBs and perform iTAC booking on OK part first
-            foreach (var position in ppResult)
+            foreach (var position in panelsResult)
             {
                 if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                 {
@@ -126,7 +125,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
 
             // Loop through all PCBs and show Interlock window for scrapped ones
-            foreach (var position in ppResult)
+            foreach (var position in panelsResult)
             {
 
                 if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_SCRAP)
@@ -141,13 +140,39 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
-        private bool StartBooking(string snr)
+        // Call the asynchronous version of UploadState
+        private async Task<bool> StartBookingAsync(string snr)
         {
-            bool result = _api.UploadState(_session.Station, snr, new string[1] { "SERIAL_NUMBER_STATE" }, null, out string[] outArgs, out int code);
-            Log.Information($"Upload SN {snr} for station {_session.Station} done, with Result {result}");
+            
+            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
+
             if (result)
             {
-                result = _api.GetSerialNumberInfo(_session.Station, snr, new string[3] { "PART_DESC", "SERIAL_NUMBER", "PART_NUMBER" }, out string[] outResults, out int codeInfo);
+                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER"]);
+
+                if (!result)
+                { 
+                    string error = $"SN Info for {snr} could not be retrieved ! error : {await _api.GetErrorTextAsync(codeInfo)}" ;
+                    _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
+                }
+
+                return true;
+            }
+            else
+            {
+                string error = await _api.GetErrorTextAsync(code);
+                _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
+                return false;
+            }
+        }
+
+        private bool StartBooking(string snr)
+        {
+            bool result = _api.UploadState(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null, out string[] outArgs, out int code);
+
+            if (result)
+            {
+                result = _api.GetSerialNumberInfo(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER"], out string[] outResults, out int codeInfo);
                 if (result)
                 {
                     Log.Information($"SN {snr} booked successfully : {outResults[0]} - {outResults[1]} - {outResults[2]}");
@@ -169,39 +194,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return false;
             }
         }
-
-        // Call the asynchronous version of UploadState
-        private async Task<bool> StartBookingAsync(string snr)
-        {
-            
-            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, new string[] { "SERIAL_NUMBER_STATE" }, null);
-            Log.Information($"Upload SN {snr} for station {_session.Station} done, with Result {result}");
-
-            if (result)
-            {
-                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, new string[] { "PART_DESC", "SERIAL_NUMBER", "PART_NUMBER" });
-
-                if (result)
-                {
-                    Log.Information($"SN {snr} booked successfully : {outResults[0]} - {outResults[1]} - {outResults[2]}");
-                }
-                else
-                {
-                    string error = $"SN Info for {snr} could not be retrieved ! error : {await _api.GetErrorTextAsync(codeInfo)}" ;
-                    _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
-                }
-
-                return true;
-            }
-            else
-            {
-                string error = await _api.GetErrorTextAsync(code);
-                _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
-                Log.Error($"Upload SN {snr} for station {_session.Station} Failed, error : {error}");
-                return false;
-            }
-        }
-
         public void OnLoaded()
         {
             OnFocusRequested("SNR");
