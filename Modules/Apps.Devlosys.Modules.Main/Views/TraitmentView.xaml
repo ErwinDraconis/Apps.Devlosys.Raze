@@ -1,0 +1,165 @@
+﻿<UserControl x:Class="Apps.Devlosys.Modules.Main.Views.TraitmentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:wpf="http://devlosys.com/winfx/xaml/themes"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:enums="clr-namespace:Apps.Devlosys.Infrastructure;assembly=Apps.Devlosys.Infrastructure"
+             xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
+             x:Name="_window">
+
+    <UserControl.Resources>
+        <Thickness x:Key="Space" Left="0" Top="0" Right="0" Bottom="20" />
+    </UserControl.Resources>
+
+    <Grid Background="#F0F0F0">
+        <Grid>
+            <wpf:Card Margin="5">
+                <Grid Grid.Column="1" Background="White">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="60" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="auto" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="1" Grid.Row="1">
+                        <ItemsControl ItemsSource="{Binding TraitementOptions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <RadioButton Content="{Binding Traitement}" Margin="8 4" GroupName="Options"
+                                                 Style="{StaticResource MaterialDesignTabRadioButtonBottom}"
+                                                 FontSize="16" FontWeight="DemiBold"
+                                                 IsChecked="{Binding IsSelected}"
+                                                 IsEnabled="{Binding IsEnable}"
+                                                 Command="{Binding DataContext.OnOptionChangedCommand, ElementName=_window}"
+                                                 CommandParameter="{Binding Traitement}">
+                                        <!--<RadioButton.Style>
+                                            <Style TargetType="RadioButton" BasedOn="{StaticResource MaterialDesignTabRadioButtonBottom}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding}" Value="{x:Static enums:TraitementEnum.BOOKING}">
+                                                        <Setter Property="IsChecked" Value="True" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </RadioButton.Style>-->
+                                    </RadioButton>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+
+                    <Grid Grid.Column="1" Grid.Row="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="1" Grid.Column="1">
+                            <TextBox x:Name="SNR" MaxWidth="700"
+                                     Text="{Binding SNR, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="18" FontWeight="Medium"
+                                     Margin="{StaticResource Space}"
+                                     Padding="{StaticResource TextBoxStyle.Padding}"
+                                     materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                     materialDesign:HintAssist.Hint="{x:Static resx:DoubleCheckResource.ContentHint}">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Gesture="Enter" 
+                                                Command="{Binding OnScanCommand}" />
+                                </TextBox.InputBindings>
+                            </TextBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Grid.Column="1" Grid.Row="4">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="0" />
+                                <RowDefinition Height="auto" />
+                            </Grid.RowDefinitions>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="auto" />
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Label1}" FontWeight="Medium"
+                                       TextAlignment="Center" Margin="0 6"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="0 5">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignSubtitle1TextBlock}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Valide}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource ForegroundValidBrush}" />
+                                            </DataTrigger>
+
+                                            <DataTrigger Binding="{Binding Valide}" Value="False">
+                                                <Setter Property="Foreground" Value="{StaticResource ForegroundErrorBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            
+                            <materialDesign:PackIcon Grid.Row="0" Grid.Column="2" Width="30" Height="30" VerticalAlignment="Center">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Foreground" Value="Transparent" />
+                                        <Setter Property="Kind" Value="Circle" />
+
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ScanState}" Value="Pass">
+                                                <Setter Property="Foreground" Value="{StaticResource ForegroundValidBrush}" />
+                                            </DataTrigger>
+
+                                            <DataTrigger Binding="{Binding ScanState}" Value="Fail">
+                                                <Setter Property="Foreground" Value="{StaticResource ForegroundErrorBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0"
+                                       Text="{Binding Label2}" FontWeight="Medium"
+                                       TextAlignment="Center" Margin="0 6"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="0 5"
+                                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0"
+                                       Text="{Binding Label3}" FontWeight="Medium"
+                                       TextAlignment="Center" Margin="0 6"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="0 5"
+                                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0"
+                                       Text="{Binding Label4}" FontWeight="Medium"
+                                       TextAlignment="Center" Margin="0 6"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="0 5"
+                                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </wpf:Card>
+        </Grid>
+    </Grid>
+</UserControl>

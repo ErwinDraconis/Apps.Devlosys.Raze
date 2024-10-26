@@ -1,0 +1,452 @@
+﻿<UserControl x:Class="Apps.Devlosys.Modules.Main.Views.Dialogs.ConfigDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
+             xmlns:wpf="http://devlosys.com/winfx/xaml/themes"
+             xmlns:enums="clr-namespace:Apps.Devlosys.Infrastructure;assembly=Apps.Devlosys.Infrastructure"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             prism:ViewModelLocator.AutoWireViewModel="True">
+
+    <UserControl.Resources>
+        <Thickness x:Key="TextBoxSpace" Left="0" Top="0" Right="0" Bottom="0" />
+        <Thickness x:Key="RadioButtonSpace" Left="2" Top="-1" Right="0" Bottom="0" />
+        
+        <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxStyle.Normal}">
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+
+        <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxStyle.Normal}">
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+    </UserControl.Resources>
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+        <Grid Background="#F0F0F0">
+            <wpf:Card Margin="10">
+                <Grid Grid.Column="1" Margin="0 0" Width="550">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="0" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="2">
+                        <GroupBox Header="Shadow Header" BorderThickness="0" Style="{DynamicResource MaterialDesignGroupBox}"
+                              materialDesign:ColorZoneAssist.Mode="Custom"
+                              materialDesign:ColorZoneAssist.Background="{StaticResource PrimaryHueMidBrush}"
+                              materialDesign:ColorZoneAssist.Foreground="{StaticResource PrimaryHueDarkForegroundBrush}">
+                            <GroupBox.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{x:Static resx:ConfigResource.ProjetsConfigHeaderText}" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" />
+                                </DataTemplate>
+                            </GroupBox.HeaderTemplate>
+
+                            <StackPanel>
+                                <Grid Margin="0 6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox ItemsSource="{Binding Projects}"
+                                          SelectedItem="{Binding ProjectType}"
+                                          Margin="{StaticResource TextBoxSpace}"
+                                          Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                          materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.PrintMethodText}" />
+
+                                    <ComboBox Grid.Column="2" ItemsSource="{Binding LabelTypes}"
+                                          SelectedItem="{Binding LabelType}"
+                                          Margin="{StaticResource TextBoxSpace}"
+                                          Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                          materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.PrintMethodText}" />
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Shadow Header" BorderThickness="0" Style="{DynamicResource MaterialDesignGroupBox}"
+                              materialDesign:ColorZoneAssist.Mode="Custom"
+                              materialDesign:ColorZoneAssist.Background="{StaticResource PrimaryHueMidBrush}"
+                              materialDesign:ColorZoneAssist.Foreground="{StaticResource PrimaryHueDarkForegroundBrush}">
+                            <GroupBox.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{x:Static resx:ConfigResource.StationParamsHeaderText}" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" />
+                                </DataTemplate>
+                            </GroupBox.HeaderTemplate>
+
+                            <StackPanel>
+                                <Grid Margin="0 6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox Grid.Column="0" Text="{Binding Station, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="{StaticResource TextBoxSpace}"
+                                         Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                         MaxLength="35" 
+                                         materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                         materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.StationHintText}" />
+
+                                    <TextBox Grid.Column="2" Text="{Binding LablingStation, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="{StaticResource TextBoxSpace}"
+                                         Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                         MaxLength="35" 
+                                         materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                         materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.LablingStationHintText}" />
+                                </Grid>
+
+                                <Grid Margin="0 6">
+                                    <TextBox Text="{Binding ItacServer, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="{StaticResource TextBoxSpace}"
+                                         Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                         MaxLength="35" 
+                                         materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                         materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.ItacServerHintText}" />
+                                </Grid>
+
+                                <Grid Margin="0 6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox ItemsSource="{Binding PrintModes}"
+                                          SelectedItem="{Binding PrintMode}"
+                                          Margin="{StaticResource TextBoxSpace}"
+                                          Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                          materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.PrintMethodText}" />
+
+                                    <StackPanel Grid.Column="2">
+                                        <ComboBox ItemsSource="{Binding Ports}"
+                                              SelectedItem="{Binding Port}"
+                                              Margin="{StaticResource TextBoxSpace}"
+                                              Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                              materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.PortHintText}" />
+
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding PrintMode}" Value="{x:Static enums:PrintModeEnum.NET}">
+                                                        <Setter Property="Visibility" Value="Hidden" />
+                                                    </DataTrigger>
+
+                                                    <DataTrigger Binding="{Binding PrintMode}" Value="{x:Static enums:PrintModeEnum.SR}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBox Text="{Binding ShippingPrinter, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="{StaticResource TextBoxSpace}"
+                                             Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                             MaxLength="35" 
+                                             materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                             materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.ShippingPrinterHintText}" />
+
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding PrintMode}" Value="{x:Static enums:PrintModeEnum.SR}">
+                                                        <Setter Property="Visibility" Value="Hidden" />
+                                                    </DataTrigger>
+
+                                                    <DataTrigger Binding="{Binding PrintMode}" Value="{x:Static enums:PrintModeEnum.NET}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0 6" Visibility="Collapsed">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 10 0" IsChecked="{Binding IsDoubleCheck}" />
+                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.DoubleCheckText}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 10 0" IsChecked="{Binding IsQualityValidation}" />
+                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.QualityValidationText}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0 6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 10 0" IsChecked="{Binding IsFVTInterlock}" />
+                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.ITACFVTInterlockText}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 10 0" IsChecked="{Binding IsPrintManuelleLabel}" />
+                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.PrintManuelleLabelText}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0 6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+
+
+                                    <TextBox Grid.Column="0" Text="{Binding Bin, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="{StaticResource TextBoxSpace}"
+                                         Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                         MaxLength="35" 
+                                         materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                         materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.BinHintText}" />
+
+
+                                    <TextBox Grid.Column="2" Text="{Binding LeakHours, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="{StaticResource TextBoxSpace}"
+                                         Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                         MaxLength="35" 
+                                         materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                         materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.LeakHoursHintText}" />
+                                </Grid>
+
+                                <!--<Grid Margin="0 6">
+                                <TextBox Text="{Binding Bin, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="{StaticResource TextBoxSpace}"
+                                         Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                         MaxLength="35" 
+                                         materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                         materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.BinHintText}" />
+                            </Grid>
+
+                            <Grid Margin="0 6">
+                                <TextBox Text="{Binding LeakHours, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="{StaticResource TextBoxSpace}"
+                                         Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                         MaxLength="35" 
+                                         materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                         materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.LeakHoursHintText}" />
+                            </Grid>-->
+
+
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Shadow Header" BorderThickness="0" Style="{DynamicResource MaterialDesignGroupBox}"
+                              materialDesign:ColorZoneAssist.Mode="Custom"
+                              materialDesign:ColorZoneAssist.Background="{StaticResource PrimaryHueMidBrush}"
+                              materialDesign:ColorZoneAssist.Foreground="{StaticResource PrimaryHueDarkForegroundBrush}">
+                            <GroupBox.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{x:Static resx:ConfigResource.MESShippingHeaderText}" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" />
+                                </DataTemplate>
+                            </GroupBox.HeaderTemplate>
+
+                            <StackPanel>
+                                <StackPanel Margin="0 6">
+                                    <TextBox Text="{Binding WorkCenter, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="{StaticResource TextBoxSpace}"
+                                         Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                         MaxLength="35"
+                                         materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                         materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.WorkCenterHintText}" />
+                                </StackPanel>
+
+                                <StackPanel Margin="0 6">
+                                    <StackPanel Margin="0 6" Orientation="Horizontal">
+                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 5 0" IsChecked="{Binding IsMESActive}" />
+                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.MESActivationText}" />
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0 6" Orientation="Horizontal">
+                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 5 0" IsChecked="{Binding IsITACInterlock}" />
+                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.ITACInterlockingText}" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <Grid Margin="0 6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="2*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox ItemsSource="{Binding UploadMethods}"
+                                          SelectedItem="{Binding UploadMethod}"
+                                          Margin="{StaticResource TextBoxSpace}"
+                                          Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                          materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.UploadMethodText}" />
+
+                                    <Grid Grid.Column="2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="20" />
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBox Grid.Column="0" Text="{Binding FtpUsername, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="{StaticResource TextBoxSpace}"
+                                             Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                             MaxLength="35"
+                                             materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                             materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.FTPUsernameHintText}" />
+
+                                        <TextBox Grid.Column="2" Text="{Binding FtpPassword, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="{StaticResource TextBoxSpace}"
+                                             Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                             MaxLength="35"
+                                             materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                             materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.FTPPasswordHintText}" />
+
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding UploadMethod}" Value="{x:Static enums:UploadMethodEnum.API}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+
+                                                    <DataTrigger Binding="{Binding UploadMethod}" Value="{x:Static enums:UploadMethodEnum.FTP}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                    </Grid>
+
+                                    <Grid Grid.Column="2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBox Grid.Column="0" Text="{Binding BarflowServer, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="{StaticResource TextBoxSpace}"
+                                             Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                             MaxLength="35"
+                                             materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                             materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.BarflowServerHintServer}" />
+
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding UploadMethod}" Value="{x:Static enums:UploadMethodEnum.API}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+
+                                                    <DataTrigger Binding="{Binding UploadMethod}" Value="{x:Static enums:UploadMethodEnum.FTP}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                    </Grid>
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- New config for the port COM used if a board is skipped (Unterlocking) -->
+                        <GroupBox Header="Shadow Header" BorderThickness="0" Style="{DynamicResource MaterialDesignGroupBox}"
+                              materialDesign:ColorZoneAssist.Mode="Custom"
+                              materialDesign:ColorZoneAssist.Background="{StaticResource PrimaryHueMidBrush}"
+                              materialDesign:ColorZoneAssist.Foreground="{StaticResource PrimaryHueDarkForegroundBrush}">
+                            <GroupBox.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="COM PORT CONFIG" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" />
+                                </DataTemplate>
+                            </GroupBox.HeaderTemplate>
+
+                            <StackPanel>
+                                <ComboBox ItemsSource="{Binding Ports}"
+                                    SelectedItem="{Binding PortInterlock}"
+                                    Margin="{StaticResource TextBoxSpace}"
+                                    Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                    materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.PortHintText}" />
+
+                                <Grid Margin="0 6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox Grid.Column="0" ItemsSource="{Binding BaudRates}"
+                                          SelectedItem="{Binding SelectedBaudRate}"
+                                          Margin="{StaticResource TextBoxSpace}"
+                                          Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                          materialDesign:HintAssist.Hint="Baud Rate" />
+
+                                    <ComboBox Grid.Column="2" ItemsSource="{Binding StopBits}"
+                                          SelectedItem="{Binding SelectedStopBit}"
+                                          Margin="{StaticResource TextBoxSpace}"
+                                          Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                          materialDesign:HintAssist.Hint="Stop Bit" />
+                                </Grid>
+
+                                <Grid Margin="0 6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox Grid.Column="0" ItemsSource="{Binding Parities}"
+                                          SelectedItem="{Binding SelectedParity}"
+                                          Margin="{StaticResource TextBoxSpace}"
+                                          Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                          materialDesign:HintAssist.Hint="Parity" />
+
+                                    <ComboBox Grid.Column="2" ItemsSource="{Binding DataBits}"
+                                          SelectedItem="{Binding SelectedDataBit}"
+                                          Margin="{StaticResource TextBoxSpace}"
+                                          Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                          materialDesign:HintAssist.Hint="Data Bits" />
+                                </Grid>
+                            </StackPanel>
+
+                        </GroupBox>
+                    </StackPanel>
+
+                    <Grid Grid.Row="4" Margin="10 0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource MaterialDesignOutlinedDarkButton}" 
+                                IsDefault="True" Height="40" MinWidth="98"
+                                Command="{Binding SaveCommand}">
+                                <StackPanel Orientation="Horizontal" >
+                                    <TextBlock Text="{x:Static resx:DialogsResource.ButtonYesCaption}" Style="{StaticResource TextBlockStyle.ButtonText}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
+                                IsCancel="True" Height="40" MinWidth="98"
+                                Command="{Binding ExitCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{x:Static resx:DialogsResource.ButtonNoCaption}" Style="{StaticResource TextBlockStyle.ButtonText}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </wpf:Card>
+        </Grid>
+    </ScrollViewer>
+    
+</UserControl>

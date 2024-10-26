@@ -1,0 +1,32 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:Apps.Devlosys.Controls"
+                    xmlns:converters="clr-namespace:Apps.Devlosys.Controls.Converters">
+
+    <ResourceDictionary.MergedDictionaries>
+
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.Brush.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.Animations.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.TextBlock.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.Card.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.CheckBox.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.RadioButton.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.Button.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.NumKeypad.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.AlphaKeypad.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.TextBox.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.ComboBox.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.ListBox.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.UserControl.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.Window.xaml"/>
+        
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource TextBoxStyle.Normal}" />
+    <Style TargetType="{x:Type PasswordBox}" BasedOn="{StaticResource PasswordBoxStyle.Normal}" />
+    <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource ComboBoxStyle.Normal}" />
+    <Style TargetType="{x:Type local:Card}" BasedOn="{StaticResource CardStyle.Default}" />
+    <Style TargetType="{x:Type local:NumKeypad}" BasedOn="{StaticResource KeypadStyle.Numpad}" />
+    <Style TargetType="{x:Type local:AlphaKeypad}" BasedOn="{StaticResource KeypadStyle.Alphapad}" />
+
+</ResourceDictionary>

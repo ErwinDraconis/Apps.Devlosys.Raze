@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net461</TargetFrameworks>
+		<UseWPF>true</UseWPF>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Serilog" Version="2.10.0" />
+		<PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
+		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+		<PackageReference Include="System.Management" Version="5.0.0" />
+		<PackageReference Include="DeviceId" Version="6.0.0" />
+		<PackageReference Include="DeviceId.Windows.Wmi" Version="6.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Apps.Devlosys.Resources\Apps.Devlosys.Resources.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="IMSApiDotNet">
+	    <HintPath>..\..\packages\IMSApiDotNet.dll</HintPath>
+	  </Reference>
+	  <Reference Include="System.Configuration" />
+	</ItemGroup>
+	
+</Project>

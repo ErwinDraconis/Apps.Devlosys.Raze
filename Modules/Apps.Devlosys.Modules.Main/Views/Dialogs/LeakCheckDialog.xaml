@@ -1,0 +1,160 @@
+﻿<UserControl x:Class="Apps.Devlosys.Modules.Main.Views.Dialogs.LeakCheckDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
+             xmlns:wpf="http://devlosys.com/winfx/xaml/themes"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             prism:ViewModelLocator.AutoWireViewModel="True">
+
+    <Grid Background="#F0F0F0">
+        <wpf:Card Margin="10">
+            <Grid Grid.Column="1" Background="White" HorizontalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="40" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="580" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Row="1" HorizontalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto" />
+                        <ColumnDefinition Width="5" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Style="{StaticResource ButtonStyle.Flat}" Command="{Binding OpenBookingDialogCommand}">
+                        <materialDesign:PackIcon Kind="InfoCircleOutline" Foreground="{StaticResource ForegroundInfoBrush}" 
+                                                 Width="40" Height="40" 
+                                                 VerticalAlignment="Center"/>
+                    </Button>
+
+                    <TextBlock Grid.Column="2" Text="{Binding Message}" 
+                               FontWeight="SemiBold" TextAlignment="Left"
+                               VerticalAlignment="Center" Foreground="{StaticResource ForegroundInfoBrush}" TextWrapping="Wrap"
+                               Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
+                </Grid>
+
+                <Grid Grid.Row="3" Margin="40 5" >
+                    <StackPanel>
+                        <TextBox x:Name="SNR" 
+                                 Text="{Binding SNR, UpdateSourceTrigger=PropertyChanged}"
+                                 Padding="{StaticResource TextBoxStyle.Padding}"
+                                 MaxLength="35"
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:LeakCheckResource.SnrScanText}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Gesture="Enter" 
+                                            Command="{Binding CheckSnrCommand}" 
+                                            CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type TextBox}}, Path=Text}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="5" Margin="40 5" >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto" />
+                        <ColumnDefinition Width="30" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static resx:LeakCheckResource.SnrText}" 
+                                Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                VerticalAlignment="Center" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="{x:Static resx:LeakCheckResource.TimeSpentPerHoursText}" 
+                                Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                VerticalAlignment="Center" />
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="{x:Static resx:LeakCheckResource.TimeSpentPerMinutesText}" 
+                                Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                VerticalAlignment="Center" />
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text=":" 
+                                Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text=":" 
+                                Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text=":" 
+                                Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                VerticalAlignment="Center" HorizontalAlignment="Center" />
+
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding CurrentSNR}" FontWeight="Medium" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignBody1TextBlock}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TimeState}" Value="Pass">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundValidBrush}" />
+                                    </DataTrigger>
+
+                                    <DataTrigger Binding="{Binding TimeState}" Value="Fail">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundErrorBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <materialDesign:PackIcon Grid.Row="0" Grid.Column="4" Width="30" Height="30" VerticalAlignment="Center">
+                        <materialDesign:PackIcon.Style>
+                            <Style TargetType="materialDesign:PackIcon">
+                                <Setter Property="Foreground" Value="Transparent" />
+                                <Setter Property="Kind" Value="Loading" />
+
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TimeState}" Value="Pass">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundValidBrush}" />
+                                        <Setter Property="Kind" Value="ClockCheckOutline" />
+                                    </DataTrigger>
+
+                                    <DataTrigger Binding="{Binding TimeState}" Value="Fail">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundErrorBrush}" />
+                                        <Setter Property="Kind" Value="ClockAlertOutline" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </materialDesign:PackIcon.Style>
+                    </materialDesign:PackIcon>
+
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding TimeSpentPerHours}" 
+                                Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                FontWeight="Medium" VerticalAlignment="Center" HorizontalAlignment="Right" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding TimeSpentPerMinutes}"
+                                Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                FontWeight="Medium" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                </Grid>
+            </Grid>
+        </wpf:Card>
+
+        <Grid Visibility="{Binding TaskStart, Converter={StaticResource BooleanToVisibilityConverter}}"
+                  Focusable="True" Grid.ColumnSpan="2" Grid.RowSpan="2"
+                  Panel.ZIndex="9999">
+            <Border BorderBrush="Black" BorderThickness="1" Background="#80000000" >
+                <Grid>
+                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                     Width="50" Height="50"
+                                     Value="0" IsIndeterminate="True" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

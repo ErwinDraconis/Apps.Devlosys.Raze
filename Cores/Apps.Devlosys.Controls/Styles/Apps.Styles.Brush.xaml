@@ -1,0 +1,21 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Color x:Key="BackgroundColor">#EBEEF2</Color>
+    <Color x:Key="ForegroundBlackColor">#313131</Color>
+    <Color x:Key="ForegroundErrorColor">#FFF44336</Color>
+    <Color x:Key="ForegroundWarningColor">#FFFFC107</Color>
+    <Color x:Key="ForegroundValidColor">#FF4CAF50</Color>
+    <Color x:Key="ForegroundInfoColor">#FF2196F3</Color>
+
+    <!--<Brush x:Key="MaterialDesignTextAreaBorder">#ECEFF2</Brush>-->
+    <Brush x:Key="MaterialDesignTextAreaBorder">#313131</Brush>
+    
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{DynamicResource BackgroundColor}" />
+    <SolidColorBrush x:Key="ForegroundBlackBrush" Color="{DynamicResource ForegroundBlackColor}" />
+    <SolidColorBrush x:Key="ForegroundErrorBrush" Color="{DynamicResource ForegroundErrorColor}" />
+    <SolidColorBrush x:Key="ForegroundWarningBrush" Color="{DynamicResource ForegroundWarningColor}" />
+    <SolidColorBrush x:Key="ForegroundInfoBrush" Color="{DynamicResource ForegroundInfoColor}" />
+    <SolidColorBrush x:Key="ForegroundValidBrush" Color="{DynamicResource ForegroundValidColor}" />
+    
+</ResourceDictionary>

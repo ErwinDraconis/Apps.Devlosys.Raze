@@ -1,0 +1,63 @@
+﻿<Window x:Class="Apps.Devlosys.Modules.Shared.Views.SplashScreen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None" ShowInTaskbar="False"
+        AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/Apps.Devlosys.Resources;component/Images/logo-icon.ico"
+        Height="292" Width="580">
+
+    <Border Background="White" BorderThickness="2" BorderBrush="{StaticResource SecondaryHueDarkBrush}" CornerRadius="10">
+        <Grid Margin="15 10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <Image Source="pack://application:,,,/Apps.Devlosys.Resources;component/Images/logo.png"
+                       Width="120"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="0" Grid.RowSpan="3" Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock Grid.Column="1" Text="V"
+                                       FontSize="90" FontWeight="Regular" VerticalAlignment="Center"
+                                       FontFamily="{StaticResource MontserratFont}"
+                                       Foreground="{StaticResource PrimaryHueDarkBrush}">
+                    </TextBlock>
+                    <TextBlock Grid.Column="1" Text="i" Margin="-1 0 0 -30"
+                                       FontSize="40" FontWeight="UltraLight" VerticalAlignment="Center"
+                                       FontFamily="{StaticResource MontserratFont}"
+                                       Foreground="{StaticResource PrimaryHueDarkBrush}">
+                    </TextBlock>
+                    <TextBlock Grid.Column="1" Text="BPAD" Margin="0 0 0 -2"
+                                       FontSize="90" FontWeight="Light" VerticalAlignment="Center"
+                                       FontFamily="{StaticResource MontserratFont}"
+                                       Foreground="{StaticResource PrimaryHueDarkBrush}">
+                    </TextBlock>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Row="2">
+                <TextBlock TextAlignment="Right">Copyright © 2019-2024</TextBlock>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Chargement des données pour l'application"
+                                   Style="{StaticResource FadeInStyle}" />
+                        <TextBlock Width="25"
+                                   Style="{StaticResource WaitingDotsStyle}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="1" TextAlignment="Right">Tous droits réservés</TextBlock>
+                </Grid>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

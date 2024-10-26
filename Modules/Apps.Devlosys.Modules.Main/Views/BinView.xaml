@@ -1,0 +1,220 @@
+﻿<UserControl x:Class="Apps.Devlosys.Modules.Main.Views.BinView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:wpf="http://devlosys.com/winfx/xaml/themes"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
+             x:Name="_window">
+    <UserControl.Resources>
+        <Thickness x:Key="Space" Left="6" Top="0" Right="6" Bottom="10" />
+    </UserControl.Resources>
+
+    <Grid Background="#F0F0F0">
+        <Grid>
+            <wpf:Card Margin="5">
+                <Grid Grid.Column="1" Background="White">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Margin="0 0 0 8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0" x:Name="Search"
+                                 Text="{Binding Search, Delay=200, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0 6"
+                                 Padding="15 8"
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:BinResource.SearchHintText}" />
+
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Button Style="{StaticResource MaterialDesignFlatButton}" Height="38"
+                                    Command="{Binding AddNewBinCommand}">
+                                <StackPanel Orientation="Horizontal" >
+                                    <materialDesign:PackIcon Kind="Plus" Width="25" Height="25" Foreground="{StaticResource ForegroundValidBrush}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="1" CornerRadius="3" Background="{StaticResource PrimaryHueLightBrush}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="0" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="17" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Padding="8" Grid.Column="0" BorderThickness="0 0 1 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}">
+                                <TextBlock Text="{x:Static resx:BinResource.IdentificationText}" Foreground="{StaticResource PrimaryHueDarkForegroundBrush}" Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                            </Border>
+                            <Border Padding="8" Grid.Column="1" BorderThickness="0 0 1 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}">
+                                <TextBlock Text="{x:Static resx:BinResource.PartNumberSFGText}" Foreground="{StaticResource PrimaryHueDarkForegroundBrush}" Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                            </Border>
+                            <Border Padding="8" Grid.Column="2" BorderThickness="0 0 1 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}">
+                                <TextBlock Text="{x:Static resx:BinResource.PartDescriptionText}" Foreground="{StaticResource PrimaryHueDarkForegroundBrush}" Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                            </Border>
+                            <Border Padding="8" Grid.Column="3" BorderThickness="0 0 1 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}">
+                                <TextBlock Text="{x:Static resx:BinResource.BinRefText}" Foreground="{StaticResource PrimaryHueDarkForegroundBrush}" Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                            </Border>
+                            <Border Padding="8" Grid.Column="4" BorderThickness="0 0 1 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}">
+                                <TextBlock Text="{x:Static resx:BinResource.HardwareRefText}" Foreground="{StaticResource PrimaryHueDarkForegroundBrush}" Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                            </Border>
+                            <Border Padding="8" Grid.Column="5" BorderThickness="0 0 1 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}">
+                                <TextBlock Text="{x:Static resx:BinResource.FinGoodText}" Foreground="{StaticResource PrimaryHueDarkForegroundBrush}" Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                            </Border>
+                            <Border Padding="8" Grid.Column="6" BorderThickness="0 0 1 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}">
+                                <TextBlock Text="{x:Static resx:BinResource.ShippingText}" Foreground="{StaticResource PrimaryHueDarkForegroundBrush}" Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                            </Border>
+                            <Border Padding="8" Grid.Column="7" BorderThickness="0 0 1 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}">
+                                <TextBlock Text="{x:Static resx:BinResource.QuantityText}" Foreground="{StaticResource PrimaryHueDarkForegroundBrush}" Style="{StaticResource MaterialDesignBody2TextBlock}" />
+                            </Border>
+                            <Border Padding="8" Grid.Column="8" BorderThickness="0 0 0 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}" />
+                            <Border Padding="8" Grid.Column="9" BorderThickness="0 0 0 0" BorderBrush="{StaticResource PrimaryHueDarkForegroundBrush}" />
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="2">
+                        <ItemsControl Grid.Row="2" ItemsSource="{Binding DataList}"
+                                      VirtualizingPanel.VirtualizationMode="Standard"
+                                      VirtualizingPanel.IsVirtualizing="True">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="-1 0 0 0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="140" />
+                                            <ColumnDefinition Width="150" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="120" />
+                                            <ColumnDefinition Width="160" />
+                                            <ColumnDefinition Width="150" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="0" />
+                                            <ColumnDefinition Width="90" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Padding="8" Grid.Column="0" BorderThickness="0 0 0 1" BorderBrush="{StaticResource PrimaryHueLightBrush}">
+                                            <TextBlock Text="{Binding Identification}" Style="{StaticResource MaterialDesignBody2TextBlock}" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Padding="8" Grid.Column="1" BorderThickness="0 0 0 1" BorderBrush="{StaticResource PrimaryHueLightBrush}">
+                                            <TextBlock Text="{Binding PartNumberSFG}" Style="{StaticResource MaterialDesignBody2TextBlock}" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Padding="8" Grid.Column="2" BorderThickness="0 0 0 1" BorderBrush="{StaticResource PrimaryHueLightBrush}">
+                                            <TextBlock Text="{Binding PartDescription}" Style="{StaticResource MaterialDesignBody2TextBlock}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Padding="8" Grid.Column="3" BorderThickness="0 0 0 1" BorderBrush="{StaticResource PrimaryHueLightBrush}">
+                                            <TextBlock Text="{Binding BinRef}" Style="{StaticResource MaterialDesignBody2TextBlock}" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Padding="8" Grid.Column="4" BorderThickness="0 0 0 1" BorderBrush="{StaticResource PrimaryHueLightBrush}">
+                                            <TextBlock Text="{Binding HardwareRef}" Style="{StaticResource MaterialDesignBody2TextBlock}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Padding="8" Grid.Column="5" BorderThickness="0 0 0 1" BorderBrush="{StaticResource PrimaryHueLightBrush}">
+                                            <TextBlock Text="{Binding FinGood}" Style="{StaticResource MaterialDesignBody2TextBlock}" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Padding="8" Grid.Column="6" BorderThickness="0 0 0 1" BorderBrush="{StaticResource PrimaryHueLightBrush}">
+                                            <TextBlock Text="{Binding Shipping}" Style="{StaticResource MaterialDesignBody2TextBlock}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                        </Border>
+                                        <Border Padding="8" Grid.Column="7" BorderThickness="0 0 0 1" BorderBrush="{StaticResource PrimaryHueLightBrush}">
+                                            <TextBlock Text="{Binding Quantity}" Style="{StaticResource MaterialDesignBody2TextBlock}" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border Padding="4" Grid.Column="8" BorderThickness="0 0 0 1" BorderBrush="{StaticResource PrimaryHueLightBrush}">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <Button Style="{StaticResource MaterialDesignFlatButton}" Padding="10 0"
+                                                        Command="{Binding DataContext.EditBinCommand, ElementName=_window}"
+                                                        CommandParameter="{Binding }">
+                                                    <StackPanel Orientation="Horizontal" >
+                                                        <materialDesign:PackIcon Kind="Edit" Width="20" Height="20" Foreground="{StaticResource ForegroundInfoBrush}" />
+                                                    </StackPanel>
+                                                </Button>
+
+                                                <Button Style="{StaticResource MaterialDesignFlatButton}" Padding="10 0"
+                                                        Command="{Binding DataContext.RemoveBinCommand, ElementName=_window}"
+                                                        CommandParameter="{Binding }">
+                                                    <StackPanel Orientation="Horizontal" >
+                                                        <materialDesign:PackIcon Kind="Delete" Width="20" Height="20" Foreground="{StaticResource ForegroundErrorBrush}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+
+                            <ItemsControl.Style>
+                                <Style TargetType="ItemsControl">
+                                    <Style.Triggers>
+                                        <Trigger Property="HasItems" Value="False">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ItemsControl">
+                                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                            <materialDesign:PackIcon Foreground="#E5E5E5"
+                                                                                     Width="130" Height="130" Margin="0 20"
+                                                                                     VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                                <materialDesign:PackIcon.Style>
+                                                                    <Style TargetType="materialDesign:PackIcon">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding DataContext.TaskStart, ElementName=_window}" Value="True">
+                                                                                <Setter Property="Kind" Value="FileSearchOutline" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding DataContext.TaskStart, ElementName=_window}" Value="False">
+                                                                                <Setter Property="Kind" Value="FileAlertOutline" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </materialDesign:PackIcon.Style>
+                                                            </materialDesign:PackIcon>
+                                                        </StackPanel>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ItemsControl.Style>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    
+                    <Grid Grid.Row="4">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource MaterialDesignOutlinedDarkButton}" 
+                                        IsDefault="True" Height="40" MinWidth="98"
+                                        Command="{Binding SyncDataCommand}">
+                                <StackPanel Orientation="Horizontal" >
+                                    <TextBlock Text="{x:Static resx:BinResource.ButtonSyncCaption}" Style="{StaticResource TextBlockStyle.ButtonText}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </wpf:Card>
+        </Grid>
+
+        <Grid Visibility="{Binding TaskStart, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Focusable="True" Grid.ColumnSpan="2" Grid.RowSpan="2"
+              Panel.ZIndex="9999">
+            <Border BorderBrush="Black" BorderThickness="1" Background="#80000000" >
+                <Grid>
+                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                     Width="50" Height="50"
+                                     Value="0" IsIndeterminate="True" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

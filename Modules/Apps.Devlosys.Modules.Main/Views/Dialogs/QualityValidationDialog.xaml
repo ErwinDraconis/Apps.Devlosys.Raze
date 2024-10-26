@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="Apps.Devlosys.Modules.Main.Views.Dialogs.QualityValidationDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
+             xmlns:wpf="http://devlosys.com/winfx/xaml/themes"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             prism:ViewModelLocator.AutoWireViewModel="True" >
+
+    <UserControl.Resources>
+        <Thickness x:Key="Space" Left="0" Top="0" Right="0" Bottom="20" />
+    </UserControl.Resources>
+    
+    <Grid Background="#F0F0F0">
+        <wpf:Card Margin="10">
+            <Grid Grid.Column="1" Background="White" HorizontalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="40" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="580" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Row="1" HorizontalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto" />
+                        <ColumnDefinition Width="5" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <materialDesign:PackIcon Kind="ShieldLockOutline" Foreground="{StaticResource ForegroundErrorBrush}" Width="40" Height="40" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding Description}" 
+                               FontWeight="SemiBold" TextAlignment="Left"
+                               VerticalAlignment="Center" Foreground="{StaticResource ForegroundErrorBrush}" TextWrapping="Wrap"
+                               Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
+                </Grid>
+
+                <Grid Grid.Row="3" Margin="40 0" >
+                    <StackPanel Grid.Row="2" Grid.Column="1">
+                        <TextBox x:Name="UserName" 
+                                 Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.Padding}"
+                                 MaxLength="35" 
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:QualityValidationResource.LoginHintText}" />
+
+                        <PasswordBox x:Name="PasswordBox"
+                                     Margin="{StaticResource Space}"
+                                     Padding="{StaticResource TextBoxStyle.Padding}"
+                                     MaxLength="35"
+                                     materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                     materialDesign:HintAssist.Hint="{x:Static resx:QualityValidationResource.PasswordHintText}" />
+
+                        <Button Margin="0 60 0 0"
+                                Content="{x:Static resx:QualityValidationResource.ButtonOkCaption}" FontSize="18"
+                                IsDefault="True"
+                                Command="{Binding LoginCommand}"
+                                Foreground="{StaticResource PrimaryHueDarkForegroundBrush}"
+                                materialDesign:ButtonAssist.CornerRadius="5"
+                                Padding="15 10" Height="55" HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </wpf:Card>
+
+        <Grid Visibility="{Binding TaskStart, Converter={StaticResource BooleanToVisibilityConverter}}"
+                  Focusable="True" Grid.ColumnSpan="2" Grid.RowSpan="2"
+                  Panel.ZIndex="9999">
+            <Border BorderBrush="Black" BorderThickness="1" Background="#80000000" >
+                <Grid>
+                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                     Width="50" Height="50"
+                                     Value="0" IsIndeterminate="True" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

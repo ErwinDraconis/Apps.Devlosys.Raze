@@ -1,0 +1,115 @@
+﻿<UserControl x:Class="Apps.Devlosys.Modules.Main.Views.Dialogs.AddBinDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
+             xmlns:wpf="http://devlosys.com/winfx/xaml/themes"
+             Style="{StaticResource UserControlStyle.Dialog}"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             prism:ViewModelLocator.AutoWireViewModel="True">
+    
+    <UserControl.Resources>
+        <Thickness x:Key="Space" Left="0" Top="0" Right="0" Bottom="10" />
+    </UserControl.Resources>
+
+    <Grid Background="#F0F0F0">
+        <wpf:Card Margin="10">
+            <Grid Grid.Column="1" Margin="20 0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="0" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="400" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Row="2" Grid.Column="1">
+                    <StackPanel Grid.Row="2" Grid.Column="1">
+                        <TextBox x:Name="Identification" 
+                                 Text="{Binding Identification, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                 MaxLength="35" 
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:AddBinResource.IdentificationHintText}" />
+
+                        <TextBox Text="{Binding PartNumberSFG, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                 MaxLength="35" 
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:AddBinResource.PartNumberSFGHintText}" />
+
+                        <TextBox Text="{Binding PartDescription, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                 MaxLength="35" 
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:AddBinResource.PartDescriptionHintText}" />
+
+                        <TextBox Text="{Binding BinRef, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                 MaxLength="35" 
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:AddBinResource.BinRefHintText}" />
+
+                        <TextBox Text="{Binding HardwareRef, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                 MaxLength="35" 
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:AddBinResource.HardwareRefHintText}" />
+
+                        <TextBox Text="{Binding FinGood, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                 MaxLength="35" 
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:AddBinResource.FinGoodHintText}" />
+
+                        <TextBox Text="{Binding Shipping, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                 MaxLength="35" 
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:AddBinResource.ShippingHintText}" />
+
+                        <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                 MaxLength="35" Visibility="Collapsed"
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:AddBinResource.QuantityHintText}" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="4">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource MaterialDesignOutlinedDarkButton}" 
+                                IsDefault="True" Height="40" MinWidth="98"
+                                Command="{Binding SaveCommand}">
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="{x:Static resx:DialogsResource.ButtonYesCaption}" Style="{StaticResource TextBlockStyle.ButtonText}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button Style="{StaticResource MaterialDesignOutlinedButton}" 
+                                IsCancel="True" Height="40" MinWidth="98"
+                                Command="{Binding ExitCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{x:Static resx:DialogsResource.ButtonNoCaption}" Style="{StaticResource TextBlockStyle.ButtonText}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </wpf:Card>
+    </Grid>
+</UserControl>

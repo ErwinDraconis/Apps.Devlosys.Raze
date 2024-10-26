@@ -1,0 +1,72 @@
+﻿<UserControl x:Class="Apps.Devlosys.Modules.Main.Views.Dialogs.UnterlockFailDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:prism="http://prismlibrary.com/"
+             xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
+             xmlns:wpf="http://devlosys.com/winfx/xaml/themes"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             prism:ViewModelLocator.AutoWireViewModel="True" >
+
+    <UserControl.Resources>
+        <Thickness x:Key="Space" Left="0" Top="0" Right="0" Bottom="20" />
+        <Storyboard x:Key="BlinkAnimation" RepeatBehavior="Forever" AutoReverse="True">
+            <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="1.0" To="0.0"
+            Duration="0:0:1" />
+        </Storyboard>
+    </UserControl.Resources>
+
+    <Grid Background="#F0F0F0">
+        <wpf:Card Margin="10" Background="IndianRed">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+
+                <materialDesign:PackIcon Grid.Row="0" Kind="ErrorOutline" Foreground="Red" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                    <materialDesign:PackIcon.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard Storyboard="{StaticResource BlinkAnimation}" />
+                        </EventTrigger>
+                    </materialDesign:PackIcon.Triggers>
+                </materialDesign:PackIcon>
+                <TextBlock Grid.Row="1" FontSize="36" Text="{Binding SNR}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                <TextBlock Grid.Row="2" FontSize="36" Text="{Binding Description}" ></TextBlock>
+
+                <Grid Grid.Row="3" Margin="40" >
+                    <StackPanel Grid.Row="2" Grid.Column="1">
+                        <TextBox x:Name="ScanSNTxt" Margin="0 5 0 0" 
+                                 Text="{Binding ScanedSN, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="True"
+                                 Padding="{StaticResource TextBoxStyle.Padding}"
+                                 MaxLength="35" 
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="Scann Serial Number" />
+
+
+                        <Button Margin="0 40 0 0"
+                                Content="{x:Static resx:QualityValidationResource.ButtonOkCaption}" FontSize="18"
+                                IsDefault="True"
+                                Command="{Binding UnblockCommand}"
+                                Foreground="{StaticResource PrimaryHueDarkForegroundBrush}"
+                                materialDesign:ButtonAssist.CornerRadius="5"
+                                Height="55" HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Grid>
+
+                <materialDesign:PackIcon Kind="Usb" Width="24" Height="24" HorizontalAlignment="Right"  Grid.Row="4"
+                                         VerticalAlignment="Bottom"  Foreground="Green"
+                                         Visibility="{Binding IsSerialPortOpen, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+            </Grid>
+
+        </wpf:Card>
+
+    </Grid>
+
+</UserControl>

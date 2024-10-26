@@ -1,0 +1,18 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <FontFamily x:Key="IBMPlexSansFont">pack://application:,,,/Apps.Devlosys.Controls;component/Fonts/IBMPlexSans/#IBM Plex Sans</FontFamily>
+    <FontFamily x:Key="MontserratFont">pack://application:,,,/Apps.Devlosys.Controls;component/Fonts/Montserrat/#Montserrat</FontFamily>
+    <FontFamily x:Key="RubikFont">pack://application:,,,/Apps.Devlosys.Controls;component/Fonts/Rubik/#Rubik</FontFamily>
+    
+    <ResourceDictionary.MergedDictionaries>
+
+        <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="BlueGrey" SecondaryColor="Green" />
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.Defaults.xaml"/>
+        
+    </ResourceDictionary.MergedDictionaries>
+    
+</ResourceDictionary>

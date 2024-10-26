@@ -1,0 +1,53 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" >
+
+    <Style x:Key="CheckBoxStyle.CheckItem" TargetType="{x:Type CheckBox}">
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundBlackBrush}"/>
+        <Setter Property="Background" Value="#EDEEEF"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Width" Value="auto"/>
+        <Setter Property="Height" Value="60"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Border x:Name="MainBorder" BorderThickness="1" BorderBrush="#FFEF5350" CornerRadius="1" Background="#FFFFCDD2">
+                        <Grid HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8 0 15 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="25" />
+                                <ColumnDefinition Width="5" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <materialDesign:PackIcon x:Name="CheckIcon" Grid.Column="0" Kind="Check" Width="25" Height="25" />
+
+                            <ContentPresenter Grid.Column="2" RecognizesAccessKey="True" 
+                                              Content="{TemplateBinding ContentControl.Content}" 
+                                              ContentTemplate="{TemplateBinding ContentControl.ContentTemplate}" 
+                                              ContentStringFormat="{TemplateBinding ContentControl.ContentStringFormat}"
+                                              SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}"
+                                              VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="MainBorder" Property="Background" Value="#FFC8E6C9"/>
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="#FF4CAF50"/>
+                            <Setter TargetName="CheckIcon" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        
+                        <Trigger Property="IsChecked" Value="False">
+                            <Setter TargetName="CheckIcon" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+</ResourceDictionary>

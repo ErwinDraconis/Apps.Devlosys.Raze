@@ -1,0 +1,106 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:Apps.Devlosys.Controls"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:enums="clr-namespace:Apps.Devlosys.Infrastructure;assembly=Apps.Devlosys.Infrastructure">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/Apps.Devlosys.Controls;component/Styles/Apps.Styles.Button.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+    
+    <Style x:Key="KeypadStyle.Numpad" TargetType="{x:Type local:NumKeypad}">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:NumKeypad}">
+                    <Border Background="Transparent" BorderThickness="0">
+                        <UniformGrid Grid.Row="1" Columns="3">
+                            <Button Content="{x:Static enums:KeypadEnum.pad1}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad1}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button Content="{x:Static enums:KeypadEnum.pad2}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad2}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button Content="{x:Static enums:KeypadEnum.pad3}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad3}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button Content="{x:Static enums:KeypadEnum.pad4}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad4}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button Content="{x:Static enums:KeypadEnum.pad5}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad5}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button Content="{x:Static enums:KeypadEnum.pad6}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad6}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button Content="{x:Static enums:KeypadEnum.pad7}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad7}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button Content="{x:Static enums:KeypadEnum.pad8}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad8}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button Content="{x:Static enums:KeypadEnum.pad9}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad9}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.padBack}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}">
+                                <materialDesign:PackIcon Kind="BackspaceOutline"
+                                                         HorizontalAlignment="Center"
+                                                         Height="30" Width="30" />
+                            </Button>
+
+                            <Button Content="{x:Static enums:KeypadEnum.pad0}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.pad0}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button x:Name="Decimal_Part" Content="{x:Static enums:KeypadEnum.DecimalSeparator}" IsEnabled="{TemplateBinding IsDecimal}"
+                                    Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.DecimalSeparator}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}" />
+
+                            <Button x:Name="Check_Part" Command="{TemplateBinding Command}"
+                                    CommandParameter="{x:Static enums:KeypadEnum.padEnter}"
+                                    Style="{StaticResource ButtonStyle.KeypadNum}">
+                                <materialDesign:PackIcon Kind="Check"
+                                                         HorizontalAlignment="Center"
+                                                         Height="30" Width="30" />
+                            </Button>
+                        </UniformGrid>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding HasCheck, RelativeSource={RelativeSource Self}}" Value="False">
+                            <Setter TargetName="Decimal_Part" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="Check_Part" Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding HasCheck, RelativeSource={RelativeSource Self}}" Value="True">
+                            <Setter TargetName="Decimal_Part" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="Check_Part" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+        
+</ResourceDictionary>

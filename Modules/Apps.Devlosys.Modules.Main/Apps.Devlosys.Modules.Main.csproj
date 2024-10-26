@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+	<PropertyGroup>
+		<TargetFramework>net461</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<LangVersion>latest</LangVersion>
+		<AssemblyName>Apps.Devlosys.Modules.Main</AssemblyName>
+		<AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Prism.Wpf" Version="8.1.97" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Cores\Apps.Devlosys.Controls\Apps.Devlosys.Controls.csproj" />
+		<ProjectReference Include="..\..\Cores\Apps.Devlosys.Core\Apps.Devlosys.Core.csproj" />
+		<ProjectReference Include="..\..\Cores\Apps.Devlosys.Resources\Apps.Devlosys.Resources.csproj" />
+		<ProjectReference Include="..\..\Services\Apps.Devlosys.Services.Interfaces\Apps.Devlosys.Services.Interfaces.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Properties\Settings.Designer.cs">
+	    <DesignTimeSharedInput>True</DesignTimeSharedInput>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Settings.settings</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Properties\Settings.settings">
+	    <Generator>SettingsSingleFileGenerator</Generator>
+	    <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+	  </None>
+	</ItemGroup>
+</Project>

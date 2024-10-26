@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+	<PropertyGroup>
+		<TargetFrameworks>net461</TargetFrameworks>
+		<UseWPF>true</UseWPF>
+		<LangVersion>latest</LangVersion>
+		<AssemblyName>Apps.Devlosys.Modules.Authentification</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Prism.Wpf" Version="8.1.97" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Cores\Apps.Devlosys.Controls\Apps.Devlosys.Controls.csproj" />
+	  <ProjectReference Include="..\..\Cores\Apps.Devlosys.Core\Apps.Devlosys.Core.csproj" />
+	  <ProjectReference Include="..\..\Cores\Apps.Devlosys.Resources\Apps.Devlosys.Resources.csproj" />
+	  <ProjectReference Include="..\..\Services\Apps.Devlosys.Services.Interfaces\Apps.Devlosys.Services.Interfaces.csproj" />
+	</ItemGroup>
+</Project>

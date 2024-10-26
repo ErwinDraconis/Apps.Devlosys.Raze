@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFrameworks>net461</TargetFrameworks>
+		<UseWPF>true</UseWPF>
+		<LangVersion>latest</LangVersion>
+		<AssemblyName>Devlosys</AssemblyName>
+		<OutputPath>..\Build\$(Configuration)\Bin-0.0.1\</OutputPath>
+		<ApplicationIcon>logo-icon.ico</ApplicationIcon>
+	</PropertyGroup>
+	
+	<ItemGroup>
+	  <None Remove="logo-icon.ico" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Include="logo-icon.ico" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="Prism.DryIoc" Version="8.0.0.1909" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="Prism.DryIoc" Version="8.0.0.1909" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\Cores\Apps.Devlosys.Controls\Apps.Devlosys.Controls.csproj" />
+		<ProjectReference Include="..\Cores\Apps.Devlosys.Core\Apps.Devlosys.Core.csproj" />
+		<ProjectReference Include="..\Cores\Apps.Devlosys.Resources\Apps.Devlosys.Resources.csproj" />
+		<ProjectReference Include="..\Modules\Apps.Devlosys.Modules.Authentification\Apps.Devlosys.Modules.Authentification.csproj" />
+		<ProjectReference Include="..\Modules\Apps.Devlosys.Modules.Main\Apps.Devlosys.Modules.Main.csproj" />
+		<ProjectReference Include="..\Modules\Apps.Devlosys.Modules.Shared\Apps.Devlosys.Modules.Shared.csproj" />
+		<ProjectReference Include="..\Services\Apps.Devlosys.Services.Interfaces\Apps.Devlosys.Services.Interfaces.csproj" />
+		<ProjectReference Include="..\Services\Apps.Devlosys.Services\Apps.Devlosys.Services.csproj" />
+	</ItemGroup>
+</Project>

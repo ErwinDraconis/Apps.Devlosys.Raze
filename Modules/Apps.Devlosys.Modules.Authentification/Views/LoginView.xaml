@@ -1,0 +1,144 @@
+﻿<UserControl x:Class="Apps.Devlosys.Modules.Authentification.Views.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:wpf="http://devlosys.com/winfx/xaml/themes"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources">
+
+    <UserControl.Resources>
+        <Thickness x:Key="Space" Left="0" Top="0" Right="0" Bottom="20" />
+    </UserControl.Resources>
+
+    <Grid Background="#F0F0F0">
+        <wpf:Card Margin="10">
+            <Grid Grid.Column="1" Background="White">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="60" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Row="0" Grid.ColumnSpan="3" Margin="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Image Source="pack://application:,,,/Apps.Devlosys.Resources;component/Images/logo.png" HorizontalAlignment="Left" Width="120"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Grid.Column="1" Text="ViBPAD"
+                                   FontSize="45" FontWeight="Regular" VerticalAlignment="Center"
+                                   FontFamily="{StaticResource MontserratFont}"
+                                   Foreground="{StaticResource PrimaryHueDarkBrush}">
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="2" Grid.ColumnSpan="3">
+                    <TextBlock Text="{x:Static resx:LoginResource.HeaderText}" TextAlignment="Center"
+                               VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                               FontFamily="{StaticResource MontserratFont}" FontWeight="SemiBold" Foreground="#99CA3C"
+                               Style="{StaticResource MaterialDesignHeadline4TextBlock}" />
+                </Grid>
+
+                <Grid Grid.Row="4" Grid.Column="1">
+                    <StackPanel Grid.Row="2" Grid.Column="1">
+                        <TextBox x:Name="UserName" FontSize="16"
+                                 Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="{StaticResource Space}"
+                                 Padding="{StaticResource TextBoxStyle.Padding}"
+                                 MaxLength="35"
+                                 materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                 materialDesign:HintAssist.Hint="{x:Static resx:LoginResource.LoginHintText}" />
+
+                        <PasswordBox x:Name="PasswordBox" FontSize="16"
+                                     Margin="{StaticResource Space}"
+                                     Padding="{StaticResource TextBoxStyle.Padding}"
+                                     MaxLength="35"
+                                     materialDesign:HintAssist.Hint="{x:Static resx:LoginResource.PasswordHintText}" />
+
+                        <Button Margin="0 60 0 0"
+                                Content="{x:Static resx:LoginResource.ButtonConnectCaption}" FontSize="18"
+                                IsDefault="True"
+                                Command="{Binding LoginCommand}"
+                                Foreground="{StaticResource PrimaryHueDarkForegroundBrush}"
+                                materialDesign:ButtonAssist.CornerRadius="5"
+                                Padding="15 10" Height="55" HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="6" Grid.ColumnSpan="3" Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto" />
+                        <ColumnDefinition Width="5" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <materialDesign:PackIcon Kind="Information" Width="30" Height="30" VerticalAlignment="Center">
+                        <materialDesign:PackIcon.Style>
+                            <Style TargetType="materialDesign:PackIcon">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding State}" Value="S">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundWarningBrush}" />
+                                    </DataTrigger>
+
+                                    <DataTrigger Binding="{Binding State}" Value="T">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundValidBrush}" />
+                                    </DataTrigger>
+
+                                    <DataTrigger Binding="{Binding State}" Value="F">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundErrorBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </materialDesign:PackIcon.Style>
+                    </materialDesign:PackIcon>
+
+                    <TextBlock Grid.Column="2" Text="{Binding Message}" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignBody1TextBlock}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding State}" Value="S">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundWarningBrush}" />
+                                    </DataTrigger>
+
+                                    <DataTrigger Binding="{Binding State}" Value="T">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundValidBrush}" />
+                                    </DataTrigger>
+
+                                    <DataTrigger Binding="{Binding State}" Value="F">
+                                        <Setter Property="Foreground" Value="{StaticResource ForegroundErrorBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </Grid>
+        </wpf:Card>
+
+        <Grid Visibility="{Binding TaskStart, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Focusable="True" Grid.ColumnSpan="2" Grid.RowSpan="2"
+              Panel.ZIndex="9999">
+            <Border BorderBrush="Black" BorderThickness="1" 
+                    Background="#80000000" >
+                <Grid>
+                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                 Width="50" Height="50"
+                                 Value="0" IsIndeterminate="True" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,36 @@
+﻿<Window x:Class="Apps.Devlosys.Windows.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:prism="http://prismlibrary.com/"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:core="clr-namespace:Apps.Devlosys.Core;assembly=Apps.Devlosys.Core"
+        xmlns:settings="clr-namespace:Apps.Devlosys.Resources.Properties;assembly=Apps.Devlosys.Resources"
+        prism:ViewModelLocator.AutoWireViewModel="True"
+        
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="14"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+             
+        FontFamily="{StaticResource MontserratFont}"
+        Style="{StaticResource WindowStyle.Main}"
+        Icon="pack://application:,,,/Apps.Devlosys.Resources;component/Images/logo-icon.ico"
+        WindowStartupLocation="CenterScreen"
+        Title="{Binding Title}" MinHeight="350" MinWidth="525"
+        WindowState="{Binding Path=MainWindowState, Source={x:Static settings:Settings.Default}, Mode=TwoWay}"
+        Height="{Binding Path=MainWindowHeight, Source={x:Static settings:Settings.Default}, Mode=TwoWay}" 
+        Width="{Binding Path=MainWindowWidth, Source={x:Static settings:Settings.Default}, Mode=TwoWay}">
+    <materialDesign:DialogHost Identifier="RootDialog">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+
+            <ContentControl prism:RegionManager.RegionName="{x:Static core:RegionNames.ContentRegion}" />
+
+            <materialDesign:Snackbar Grid.Row="1" HorizontalAlignment="Stretch" MessageQueue="{Binding GlobalMessageQueue}" />
+        </Grid>
+    </materialDesign:DialogHost>
+</Window>
