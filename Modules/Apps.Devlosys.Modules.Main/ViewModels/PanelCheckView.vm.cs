@@ -14,6 +14,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -122,7 +123,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                 {
 #if RELEASE
-                    await StartBookingAsync(position.SerialNumber);
+                    await ProcessBookingAsync(position.SerialNumber);
 #endif
                 }
             }
@@ -143,80 +144,109 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
-        private async Task StartBookingAsync(string serialNumber)
+        private async Task ProcessBookingAsync(string SerialNumber)
         {
-            bool success   = false;
-            string message = string.Empty;
-
-            var (pcbState, errCode, errDesc) = await CheckPcbAsync(SNR);
-            if (!pcbState)
+            // Verify if iTAC attributes exist  
+            var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SerialNumber);
+            if (isAttrAppended == 0) 
             {
-                ShowInterlockFailDialog(errCode, errDesc);
-                return;
-            }
-
-            (success, message) = await MesBookingAsync(SNR);
-            if (success)
-            {
-                if (await StartiTACBookingAsync(SNR))
+                while (true)
                 {
-                    await _api.LockSerialAsync(_session.Station, SNR);
+                    var (success, message) = await StartiTACBookingAsync(SerialNumber);
+
+                    if (success)
+                    {
+                        return; 
+                    }
+                    else
+                    {
+                        var check = _dialogService.ShowDialog(
+                            "Re-try iTAC booking",
+                            new DialogParameters($"title=iTAC Booking Failed &message=iTAC booking for {SerialNumber} failed. Do you want to retry?")
+                        );
+
+                        if (check == ButtonResult.No)
+                        {
+                            // Change color on the display to show that this board has failed in iTAC or MES booking
+                            Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
+                            return;
+                        }
+                    }
                 }
             }
-        }
 
-        // Call the asynchronous version of UploadState
-        private async Task<bool> StartiTACBookingAsync(string snr)
-        {
+
+            // Attribute does not exist, append attributes and perform MES and iTAC booking
+            var appendMesAttrRslt = await _api.SetUserWhoManAsync(_session.Station, SerialNumber, _session.UserName);
+            appendMesAttrRslt    |= await _api.AppendMESAttrAsync(_session.Station, SerialNumber);
             
-            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
 
-            if (result)
+            // Set up for retry logic for MES booking  
+            while (true)
             {
-                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER"]);
+                var (success, message) = await MesBookingAsync(SerialNumber);
 
-                if (!result)
-                { 
-                    string error = $"SN Info for {snr} could not be retrieved ! error : {await _api.GetErrorTextAsync(codeInfo)}" ;
-                    _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
-                }
-
-                return true;
-            }
-            else
-            {
-                string error = await _api.GetErrorTextAsync(code);
-                _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
-                return false;
-            }
-        }
-
-        private bool StartBooking(string snr)
-        {
-            bool result = _api.UploadState(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null, out string[] outArgs, out int code);
-
-            if (result)
-            {
-                result = _api.GetSerialNumberInfo(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER"], out string[] outResults, out int codeInfo);
-                if (result)
+                if (success)
                 {
-                    Log.Information($"SN {snr} booked successfully : {outResults[0]} - {outResults[1]} - {outResults[2]}");
+                    while (true) 
+                    {
+                        (success, message) = await StartiTACBookingAsync(SerialNumber);
+                        if (success)
+                        {
+                            await _api.LockSerialAsync(_session.Station, SerialNumber);
+                            return; 
+                        }
+                        else
+                        {
+                            var check = _dialogService.ShowDialog(
+                                "Re-try iTAC booking",
+                                new DialogParameters($"title=iTAC Booking Failed &message=iTAC booking for {SerialNumber} failed, reason {message}. Do you want to retry?")
+                            );
+
+                            if (check == ButtonResult.No)
+                            {
+                                Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
+                                return; 
+                            }
+                        }
+                    }
                 }
                 else
                 {
+                    var check = _dialogService.ShowDialog(
+                        "Re-try MES booking",
+                        new DialogParameters($"title=MES Booking Failed &message=MES booking for {SerialNumber} failed, reason: {message}. Do you want to retry?")
+                    );
+                    if (check == ButtonResult.No)
+                    {
+                        Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
+                        return; 
+                    }
+                }
+            }
 
-                    string error = _api.GetErrorText(codeInfo);
-                    _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
+        }
+
+        private async Task<(bool success, string message)> StartiTACBookingAsync(string snr)
+        {
+            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, new[] { "SERIAL_NUMBER_STATE" }, null);
+
+            if (result)
+            {
+                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, new[] { "PART_DESC", "SERIAL_NUMBER", "PART_NUMBER" });
+
+                if (!result)
+                {
+                    string error = $"SN Info for {snr} could not be retrieved! Error: {await _api.GetErrorTextAsync(codeInfo)}";
+                    return (true, error);
                 }
 
-                return true;
+                return (true, $"iTAC booking for {snr} succeeded.");
             }
             else
             {
-                string error = _api.GetErrorText(code);
-                _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
-                Log.Error($"Upload SN {snr} for station {_session.Station} Failed, error : {error}");
-                return false;
+                string error = $"iTAC booking for {snr} failed! Error: {await _api.GetErrorTextAsync(code)}";
+                return (false, error);
             }
         }
 
@@ -268,7 +298,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
             if (result.status == "fail")
             {
-                _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, result.reason, OkDialogType.Warning);
                 return (false, result.reason);
             }
 
@@ -280,7 +309,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             BinData data = null;
 
             string line;
-            bool founded = false;
 
             StreamReader file = new(AppDomain.CurrentDomain.BaseDirectory + "\\data\\bin.txt");
 
@@ -302,8 +330,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                             Shipping = col[6],
                             Quantity = col[7],
                         };
-
-                        founded = true;
 
                         break;
                     }
@@ -342,11 +368,11 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
-        private void ShowInterlockFailDialog(string errCode, string errDesc)
+        private void ShowInterlockFailDialog(string errCode, string errDesc,string SerialNumber)
         {
             _dialogService.ShowDialog(
                 DialogNames.UnterlockFailDialog,
-                new DialogParameters($"title=iTAC Check - ERROR DETECTED &SNR={SNR}&Description=Interlock in iTAC failed with error code [{errCode}] : {errDesc},&CallerWindow=TraitmentView")
+                new DialogParameters($"title=iTAC Check - ERROR DETECTED &SNR={SerialNumber}&Description=Interlock in iTAC failed with error code [{errCode}] : {errDesc},&CallerWindow=PanelCheckView")
             );
 
         }

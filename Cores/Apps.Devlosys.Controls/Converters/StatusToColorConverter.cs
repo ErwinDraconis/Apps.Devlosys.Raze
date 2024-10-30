@@ -15,6 +15,8 @@ namespace Apps.Devlosys.Controls.Converters
                 return Brushes.OrangeRed;
             else if((int)value == 2) // Part is scrap
                 return Brushes.DarkRed;
+            else if ((int)value == 10) // Part failed during iTAC or MES booking
+                return Brushes.Azure;
             else
                 return Brushes.Yellow;
         }
