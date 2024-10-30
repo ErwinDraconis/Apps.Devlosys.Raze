@@ -39,6 +39,8 @@ namespace Apps.Devlosys.Services.Interfaces
 
         bool LockSnrItac(string station, string snr, out int code);
 
+        Task LockSerialAsync(string station, string srn);
+
         bool UnlockSnrItac(string station, string snr, out int code);
 
         Task<List<PanelPositions>> GetPanelSNStateAsync(string station, string snr);

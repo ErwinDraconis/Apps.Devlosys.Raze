@@ -426,11 +426,11 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private bool StartBooking(string snr)
         {
-            bool result = _api.UploadState(_session.Station, snr, new string[1] { "SERIAL_NUMBER_STATE" }, null, out string[] outArgs, out int code);
+            bool result = _api.UploadState(_session.Station, snr, ["SERIAL_NUMBER_STATE" ], null, out string[] outArgs, out int code);
 
             if (result)
             {
-                result = _api.GetSerialNumberInfo(_session.Station, snr, new string[3] { "PART_DESC", "SERIAL_NUMBER", "PART_NUMBER" }, out string[] outResults, out int codeInfo);
+                result = _api.GetSerialNumberInfo(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER" ], out string[] outResults, out int codeInfo);
                 if (result)
                 {
                     PrintResult(true, $"LAST SN : {snr}", $"STATION NO : {_session.Station}", $"REFERENCE : {outResults[2]}", $"PRODUIT : {outResults[0]}");
@@ -836,7 +836,10 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             // Set up for retry logic for MES booking  
             if (await AttemptMesBookingAsync(SNR))
             {
-                await StartBookingAsync(SNR);
+                if(await StartBookingAsync(SNR))
+                {
+                    await _api.LockSerialAsync(_session.Station, SNR);
+                }
             }
             else
             {
@@ -883,6 +886,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
             else
             {
+                // PCB already booked in iTAC but without MES, this should return true
+                if (errorCode == "0")
+                {
+                    return (true, "Ok", string.Empty);
+                }
+
                 string errorDesc = await _api.GetErrorTextAsync(int.Parse(errorCode));
                 return (false, errorCode, errorDesc);
             }

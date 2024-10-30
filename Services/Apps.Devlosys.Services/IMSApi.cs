@@ -354,11 +354,6 @@ namespace Apps.Devlosys.Services
                     UploadFileAsync(prettyXML, _session.FtpUsername, _session.FtpPassword);
                 }
 
-                if (_session.IsItacInterlock)
-                {
-                    await Task.Run(()=> LockSerial(_session.Station, serialNumber));
-                }
-
                 return ("ok", null);
             }
             catch (Exception ex)
@@ -546,6 +541,21 @@ namespace Apps.Devlosys.Services
 
             imsapi.attribAppendAttributeValues(sessionContext, station, 0, srn, "-1", -1L, 0, attributeUploadKeys, attributeUploadValues, out _);
         }
+
+        public async Task LockSerialAsync(string station, string srn)
+        {
+            await Task.Run(() =>
+                imsapi.attribRemoveAttributeValue(sessionContext, station, 0, srn, "-1", "MesLock", "MesLock")
+            );
+
+            string[] attributeUploadKeys   = ["ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" ];
+            string[] attributeUploadValues = ["MesLock", "1", "0" ];
+
+            await Task.Run(() =>
+                imsapi.attribAppendAttributeValues(sessionContext, station, 0, srn, "-1", -1L, 0, attributeUploadKeys, attributeUploadValues, out _)
+            );
+        }
+
 
         public async void UploadFileAsync(string beutyXML, string username, string password)
         {
