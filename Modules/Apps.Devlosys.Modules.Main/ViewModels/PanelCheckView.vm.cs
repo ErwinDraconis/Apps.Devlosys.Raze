@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Markup;
 
 
 namespace Apps.Devlosys.Modules.Main.ViewModels
@@ -123,15 +124,27 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                 {
 #if RELEASE
-                    await ProcessBookingAsync(position.SerialNumber);
+                    try
+                    {
+                        await ProcessBookingAsync(position.SerialNumber);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Exception Occured : ProcessBookingAsync : {ex.Message} {Environment.NewLine} {ex.StackTrace} ");
+                        _dialogService.ShowDialog(
+                                "Exception Occured",
+                                new DialogParameters($"title=Exception Occured &message={ex.Message}")
+                            );
+                    }
 #endif
                 }
             }
 
+            
             // Loop through all PCBs and show Interlock window for scrapped ones
             foreach (var position in panelsResult)
             {
-
+                Log.Information($"{position.SerialNumber} - {position.PositionNumber} - {position.Status}");
                 if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_SCRAP)
                 {
                     string scrapMessage = $"Scrapped part at position {position.PositionNumber} was found.";
@@ -142,6 +155,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     );
                 }
             }
+            
+            
         }
 
         private async Task ProcessBookingAsync(string SerialNumber)
@@ -177,8 +192,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
 
             // Attribute does not exist, append attributes and perform MES and iTAC booking
-            var appendMesAttrRslt = await _api.SetUserWhoManAsync(_session.Station, SerialNumber, _session.UserName);
-            appendMesAttrRslt    |= await _api.AppendMESAttrAsync(_session.Station, SerialNumber);
+            var _attrRslt = await _api.SetUserWhoManAsync(_session.Station, SerialNumber, _session.UserName);
+            _attrRslt    |= await _api.AppendMESAttrAsync(_session.Station, SerialNumber);
             
 
             // Set up for retry logic for MES booking  
@@ -229,11 +244,11 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task<(bool success, string message)> StartiTACBookingAsync(string snr)
         {
-            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, new[] { "SERIAL_NUMBER_STATE" }, null);
+            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE" ], null);
 
             if (result)
             {
-                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, new[] { "PART_DESC", "SERIAL_NUMBER", "PART_NUMBER" });
+                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER" ]);
 
                 if (!result)
                 {
@@ -291,17 +306,13 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return (false,$"Label data not available for SN {lastSnr}");
             }
 
-            string refrence = Regex.Replace(data.FinGood, "^0*", "");
-            
+            string reference = Regex.Replace(data.FinGood, "^0*", "");
 
-            var result = await StartMESNowAsync(snr, refrence);
+            string date = DateTime.Now.ToString(_session.DateFormat, CultureInfo.InvariantCulture);
+            string workcenter = _session.WorkCenter;
 
-            if (result.status == "fail")
-            {
-                return (false, result.reason);
-            }
+            return await _api.StartMESAsync(workcenter, reference, date, snr, "1", "10", _session);
 
-            return (true,null);
         }
 
         private BinData GetDataForLabel(string snr)
@@ -339,31 +350,23 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             return data;
         }
 
-        private async Task<(string status, string reason)> StartMESNowAsync(string snr, string reference)
+        public async Task<(bool success, int errCode, string errorDescription)> CheckPcbAsync(string snr)
         {
-            string date = DateTime.Now.ToString(_session.DateFormat, CultureInfo.InvariantCulture);
-            string workcenter = _session.WorkCenter;
-
-            return await _api.StartMESAsync(workcenter, reference, date, snr, "1", "10", _session);
-        }
-
-        public async Task<(bool success, string errCode, string errorDescription)> CheckPcbAsync(string snr)
-        {
-            (bool result, string errorCode, string errorDescription) = await _api.CheckSerialNumberStateAsync(_session.Station, snr);
+            (bool result, string errorDescription, int errorCode) = await _api.CheckSerialNumberStateAsync(_session.Station, snr);
 
             if (result)
             {
-                return (true, string.Empty, string.Empty);
+                return (true, 0, string.Empty);
             }
             else
             {
                 // PCB already booked in iTAC but without MES, this should return true
-                if (errorCode == "0")
+                if (errorCode == 0)
                 {
-                    return (true, "Ok", string.Empty);
+                    return (true, 0, string.Empty);
                 }
 
-                string errorDesc = await _api.GetErrorTextAsync(int.Parse(errorCode));
+                string errorDesc = await _api.GetErrorTextAsync(errorCode);
                 return (false, errorCode, errorDesc);
             }
         }

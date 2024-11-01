@@ -48,13 +48,21 @@ namespace Apps.Devlosys.Services
 
         public int ItacShutDown()
         {
+            try
+            {
 #if DEBUG
-            int result = 0;
+        int result = 0;
 #else
-            int result = imsapi.imsapiShutdown();
+                int result = imsapi.imsapiShutdown();
 #endif
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"An error occurred during iTAC shutdown: {ex.Message} - Stack trace {ex.StackTrace}");
 
-            return result;
+                return -1;
+            }
         }
 
         public bool CheckUser(string station, string username, string password)
@@ -111,20 +119,29 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
         }
 
-        public async Task<(bool, string state, string error)> CheckSerialNumberStateAsync(string station, string snr)
+        public async Task<(bool Success, string SnState, int ErrorCode)> CheckSerialNumberStateAsync(string station, string snr)
         {
-            return await Task.Run(() =>
-            {
-                string[] resultKeys = { "SERIAL_NUMBER_STATE", "ERROR_CODE" };
+            Log.Information("Entered CheckSerialNumberStateAsync");
+            string[] resultKeys = ["SERIAL_NUMBER_STATE", "ERROR_CODE"];
+            string snState      = string.Empty;
+            int errorCode       = -1;
 
+            bool success = await Task.Run(() =>
+            {
                 int result = imsapi.trCheckSerialNumberState(sessionContext, station, 2, 0, snr, "-1", resultKeys, out string[] outResults);
 
-                string state = outResults[0];
-                string error = outResults[1];
+                if (outResults.Length >= 2)
+                {
+                    snState = outResults[0];
+                    int.TryParse(outResults[1], out errorCode); 
+                }
 
-                return (result == RES_OK, state, error);
+                return result == RES_OK;
             });
+            Log.Information($"CheckSerialNumberStateAsync {snr} snState {snState} errorCode {errorCode}");
+            return (success, snState, errorCode);
         }
+
 
         public bool UploadState(string station, string snr, string[] inKeys, string[] inValues, out string[] results, out int code)
         {
@@ -147,6 +164,7 @@ namespace Apps.Devlosys.Services
             return await Task.Run(() =>
             {
                 var result = imsapi.trUploadState(sessionContext, station, 2, snr, "-1", 0, 0, -1L, 0f, inKeys, inValues, out string[] outResults);
+                Log.Information($"UploadStateAsync SN {snr} RSLT {result}");
                 return (result == RES_OK, outResults, result);
             });
         }
@@ -174,6 +192,7 @@ namespace Apps.Devlosys.Services
             return await Task.Run(() =>
             {
                 var result = imsapi.trGetSerialNumberInfo(sessionContext, station, snr, "-1", inKeys, out string[] outResults);
+                Log.Information($"GetSerialNumberInfoAsync SNR {snr} result {result}");
                 return (result == RES_OK, outResults, result);
             });
         }
@@ -274,8 +293,8 @@ namespace Apps.Devlosys.Services
                         panelRslt.Add(new PanelPositions
                         {
                             PositionNumber = int.Parse(SnStateResultValues[i]),
-                            SerialNumber = SnStateResultValues[i + 1],
-                            Status = int.Parse(SnStateResultValues[i + 2]),
+                            SerialNumber   = SnStateResultValues[i + 1],
+                            Status         = int.Parse(SnStateResultValues[i + 2]),
                         });
                     }
 
@@ -298,15 +317,19 @@ namespace Apps.Devlosys.Services
 
         public async Task<int> SetUserWhoManAsync(string station, string srn, string username)
         {
-            string[] attributeUploadKeys = new string[3] { "ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" };
-            string[] attributeUploadValues = new string[3] { "razeUser", $"{username} on : {DateTime.Now}", "0" };
+            string[] attributeUploadKeys   = ["ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" ];
+            string[] attributeUploadValues = ["razeUser", $"{username} on : {DateTime.Now}", "0"];
 
             return await Task.Run(() =>
             {
                 int result = imsapi.attribAppendAttributeValues(sessionContext, station, 0, srn, "-1", -1L, 0, attributeUploadKeys, attributeUploadValues, out string[] results);
 
-                // Check the result and return the appropriate value
-                return result == RES_OK ? 0 : int.Parse(results[1]);
+                Log.Information($"SetUserWhoManAsync : SNR {srn} RSLT {results[1]}");
+                return result == RES_OK
+                ? 0
+                : (results.Length > 1 && int.TryParse(results[1], out int parsedResult)
+                ? parsedResult
+                : -1);//throw new InvalidOperationException("Failed to parse error code."));
             });
         }
 
@@ -331,10 +354,10 @@ namespace Apps.Devlosys.Services
             }
         }*/
 
-        public async Task<(string status, string reason)> StartMESAsync(string WorkCenter, string productNumber, string eventDateTime, string serialNumber, string Qte, string CycleTime, AppSession _session)
+        public async Task<(bool status, string reason)> StartMESAsync(string WorkCenter, string productNumber, string eventDateTime, string serialNumber, string Qte, string CycleTime, AppSession _session)
         {
             string motherForm = $"<?xml version=\"1.0\"?><FSA_INT_FlatFileManager xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"C:/Inetpub/wwwroot/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd\" Version=\"1.0\"><FIInvocationSynchronousEvent NodeType=\"FIInvocation\"><StandardOperation><OperationResolutionMethod>ByOperationCode</OperationResolutionMethod><OperationCode>SVC_MES_MI_ProductionDeclaration</OperationCode></StandardOperation><Parameters><Inputs><InputName>WorkCenter</InputName><InputValue>{WorkCenter}</InputValue></Inputs><Inputs><InputName>ProductNo</InputName><InputValue>{productNumber}</InputValue></Inputs><Inputs><InputName>EventDateTime</InputName><InputValue>{eventDateTime}</InputValue></Inputs><Inputs><InputName>SerialNo</InputName><InputValue>{serialNumber}</InputValue></Inputs><Inputs><InputName>Quantity</InputName><InputValue>{Qte}</InputValue></Inputs><Inputs><InputName>CycleTime</InputName><InputValue>{CycleTime}</InputValue></Inputs></Parameters></FIInvocationSynchronousEvent></FSA_INT_FlatFileManager>";
-            string prettyXML = PrettyXml(motherForm);
+            string prettyXML  = PrettyXml(motherForm);
 
             try
             {
@@ -342,23 +365,27 @@ namespace Apps.Devlosys.Services
                 {
                     var apiResponse = await SendApiAsync(prettyXML, _session.BarFlowServer);
 
-                    if (apiResponse.status == "fail")
+                    if (apiResponse.status == false)
                     {
                         Log.Error("API call failed : " + apiResponse.reason);
-                        return ("fail", apiResponse.reason);
+                        return (false, apiResponse.reason);
                     }
-                    Log.Error("API call Ok : " + apiResponse.status);
+                    else
+                    {
+                        Log.Information("API call Ok : " + apiResponse.status);
+                        return (true, null);
+                    }
+                    
                 }
                 else
                 {
-                    UploadFileAsync(prettyXML, _session.FtpUsername, _session.FtpPassword);
+                    return await UploadFileAsync(prettyXML, _session.FtpUsername, _session.FtpPassword);
                 }
-
-                return ("ok", null);
+                
             }
             catch (Exception ex)
             {
-                return ("fail", $"Error in StartMES: {ex.Message}");
+                return (false, $"Error in StartMES: {ex.Message}");
             }
         }
 
@@ -375,14 +402,16 @@ namespace Apps.Devlosys.Services
 
         public async Task<int> VerifyMESAttrAsync(string station, string serialNumber)
         {
-            string[] attributeCodeArray = { "MES_Booking" };
-            string[] attributeResultKeys = { "ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" };
+            string[] attributeCodeArray  = [ "MES_Booking" ];
+            string[] attributeResultKeys = [ "ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" ];
 
             return await Task.Run(() =>
             {
                 int result = imsapi.attribGetAttributeValues(sessionContext, station, 0, serialNumber, null, attributeCodeArray, 0, attributeResultKeys, out string[] results);
-
-                return result != RES_OK ? -1 : int.Parse(results[1]);
+                Log.Information($"VerifyMESAttrAsync SNR {serialNumber} RSLT {results[1]}");
+                return result != RES_OK ? -1 
+                :(results.Length > 1 && int.TryParse(results[1], out int parsedResult) 
+                ? parsedResult : -1);
             });
         }
 
@@ -400,15 +429,18 @@ namespace Apps.Devlosys.Services
 
         public async Task<int> AppendMESAttrAsync(string station, string serialNumber)
         {
-            string[] attributeResultKeys = new string[3] { "ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" };
-            string[] attributeUploadValues = new string[3] { "MES_Booking", "1", "0" };
+            string[] attributeResultKeys = ["ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE"];
+            string[] attributeUploadValues = ["MES_Booking", "1", "0"];
 
             return await Task.Run(() =>
             {
                 int result = imsapi.attribAppendAttributeValues(sessionContext, station, 0, serialNumber, null, -1L, 1, attributeResultKeys, attributeUploadValues, out string[] results);
-
-                // Check the result and return the appropriate value
-                return result == RES_OK ? 0 : int.Parse(results[1]);
+                Log.Information($"AppendMESAttrAsync SNR : {serialNumber} RSLT {results[1]}");
+                return result == RES_OK
+                ? 0
+                : (results.Length > 1 && int.TryParse(results[1], out int parsedResult)
+                ? parsedResult
+                : -1); // exception occured
             });
         }
 
@@ -551,13 +583,13 @@ namespace Apps.Devlosys.Services
             string[] attributeUploadKeys   = ["ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" ];
             string[] attributeUploadValues = ["MesLock", "1", "0" ];
 
-            await Task.Run(() =>
+            var result = await Task.Run(() =>
                 imsapi.attribAppendAttributeValues(sessionContext, station, 0, srn, "-1", -1L, 0, attributeUploadKeys, attributeUploadValues, out _)
             );
+            Log.Information($"LockSerialAsync SNR {srn} RSLT {result}");
         }
 
-
-        public async void UploadFileAsync(string beutyXML, string username, string password)
+        public async Task<(bool Success, string Message)> UploadFileAsync(string beautyXML, string username, string password)
         {
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "xml");
             if (!Directory.Exists(path))
@@ -567,12 +599,24 @@ namespace Apps.Devlosys.Services
 
             string filePath = Path.Combine(path, $"{DateTime.Now:yyyyMMddHHmm}_fileToUpload.xml");
 
-            using StreamWriter fsWrite = new(filePath);
-            fsWrite.WriteLine(beutyXML);
-            await UploadFileToFtpAsync("ftp://10.172.4.117/FLEXNET/FLATFILES/TODO/", filePath, username, password);
+            try
+            {
+                using StreamWriter fsWrite = new(filePath);
+                await fsWrite.WriteLineAsync(beautyXML);
+
+                // Upload the file to FTP server and capture the result
+                var (rslt, message) = await UploadFileToFtpAsync("ftp://10.172.4.117/FLEXNET/FLATFILES/TODO/", filePath, username, password);
+                Log.Information($"UploadFileAsync : {rslt} {message}");
+                return (rslt, message);
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Failed to write or upload file: {ex.Message}");
+            }
         }
 
-        private static async Task<(string status, string reason)> SendApiAsync(string body, string barflow)
+
+        private static async Task<(bool status, string reason)> SendApiAsync(string body, string barflow)
         {
             try
             {
@@ -591,11 +635,11 @@ namespace Apps.Devlosys.Services
                 {
                     if (httpResponse.StatusCode == HttpStatusCode.OK)
                     {
-                        return ("ok", null);
+                        return (true, null);
                     }
                     else
                     {
-                        return ("fail", $"Unexpected response code: {(int)httpResponse.StatusCode} {httpResponse.StatusDescription}");
+                        return (false, $"Unexpected response code: {(int)httpResponse.StatusCode} {httpResponse.StatusDescription}");
                     }
                 }
             }
@@ -603,13 +647,13 @@ namespace Apps.Devlosys.Services
             {
                 if (webEx.Response is HttpWebResponse errorResponse)
                 {
-                    return ("fail", $"Web exception: {(int)errorResponse.StatusCode} {errorResponse.StatusDescription}");
+                    return (false, $"Web exception: {(int)errorResponse.StatusCode} {errorResponse.StatusDescription}");
                 }
-                return ("fail", $"Web exception: {webEx.Message}");
+                return (false, $"Web exception: {webEx.Message}");
             }
             catch (Exception ex)
             {
-                return ("fail", $"General exception: {ex.Message}");
+                return (false, $"General exception: {ex.Message}");
             }
         }
 
@@ -642,12 +686,12 @@ namespace Apps.Devlosys.Services
             }
         }
 
-        public async Task UploadFileToFtpAsync(string url, string filePath, string username, string password)
+        public async Task<(bool Success, string Message)> UploadFileToFtpAsync(string url, string filePath, string username, string password)
         {
             try
             {
                 string fileName = Path.GetFileName(filePath);
-                FtpWebRequest request = (FtpWebRequest)WebRequest.Create(url + fileName);
+                var request = (FtpWebRequest)WebRequest.Create(url + fileName);
                 request.Method = WebRequestMethods.Ftp.UploadFile;
                 request.Credentials = new NetworkCredential(username, password);
                 request.UsePassive = true;
@@ -655,22 +699,19 @@ namespace Apps.Devlosys.Services
                 request.KeepAlive = false;
 
                 using (FileStream fileStream = File.OpenRead(filePath))
+                using (Stream requestStream = await request.GetRequestStreamAsync())
                 {
-                    using (Stream requestStream = await request.GetRequestStreamAsync())
-                    {
-                        await fileStream.CopyToAsync(requestStream);
-                        requestStream.Close(); 
-                    }
+                    await fileStream.CopyToAsync(requestStream);
                 }
 
                 using FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync();
+                return (true, $"File uploaded successfully. Status: {response.StatusDescription}");
             }
             catch (Exception ex)
             {
-                throw new Exception("Error uploading file to FTP", ex);
+                return (false, $"Error uploading file to FTP: {ex.Message}");
             }
         }
-
 
         private void WriteToFile(string Message)
         {

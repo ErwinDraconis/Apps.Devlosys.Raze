@@ -17,7 +17,7 @@ namespace Apps.Devlosys.Services.Interfaces
 
         bool CheckSerialNumberState(string station, string snr, out string state, out string error);
 
-        Task<(bool, string state, string error)> CheckSerialNumberStateAsync(string station, string snr);
+        Task<(bool Success, string SnState, int ErrorCode)> CheckSerialNumberStateAsync(string station, string snr);
 
         bool UploadState(string station, string snr, string[] inKeys, string[] inValues, out string[] results, out int code);
 
@@ -52,7 +52,7 @@ namespace Apps.Devlosys.Services.Interfaces
         Task<int> SetUserWhoManAsync(string station, string srn, string username);
 
         //void StartMES(string WorkCenter, string productNumber, string eventDateTime, string serialNumber, string Qte, string CycleTime, AppSession _session);
-        Task<(string status, string reason)> StartMESAsync(string WorkCenter, string productNumber, string eventDateTime,string serialNumber, 
+        Task<(bool status, string reason)> StartMESAsync(string WorkCenter, string productNumber, string eventDateTime,string serialNumber, 
               string Qte, string CycleTime, AppSession _session);
 
         public int VerifyMESAttr(string station, string serialNumber);

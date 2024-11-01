@@ -306,7 +306,10 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                             break;
                     }
 
-                    if (TraitementOption != TraitementEnum.BIN || TraitementOption != TraitementEnum.BOOKING)
+                    if (TraitementOption == TraitementEnum.BOOKING)
+                        return;
+
+                    if (TraitementOption != TraitementEnum.BIN)
                     {
                         _api.SetUserWhoMan(_session.Station, SNR, _session.UserName);
 
@@ -876,23 +879,23 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             return false; // If all retries fail
         }
 
-        public async Task<(bool success, string errCode, string errorDescription)> CheckPcbAsync(string snr)
+        public async Task<(bool success, int errCode, string errorDescription)> CheckPcbAsync(string snr)
         {
-            (bool result, string errorCode, string errorDescription) = await _api.CheckSerialNumberStateAsync(_session.Station, snr);
+            (bool result, string snState, int errorCode) = await _api.CheckSerialNumberStateAsync(_session.Station, snr);
 
             if (result)
             {
-                return (true, string.Empty, string.Empty);
+                return (true, 0, string.Empty);
             }
             else
             {
                 // PCB already booked in iTAC but without MES, this should return true
-                if (errorCode == "0")
+                if (errorCode == 0)
                 {
-                    return (true, "Ok", string.Empty);
+                    return (true, 0, string.Empty);
                 }
 
-                string errorDesc = await _api.GetErrorTextAsync(int.Parse(errorCode));
+                string errorDesc = await _api.GetErrorTextAsync(errorCode);
                 return (false, errorCode, errorDesc);
             }
         }
@@ -948,7 +951,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 if (!_session.IsItacInterlock)
                 {
                     var result = await StartMESWithDelayAsync(snr, refrence, 5.0);
-                    if (result.status == "fail")
+                    if (result.status == false)
                     {
                         _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, result.reason, OkDialogType.Warning);
                         return false;
@@ -957,7 +960,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 else if (gg == 0)
                 {
                     var result = await StartMESNowAsync(snr, refrence);
-                    if (result.status == "fail")
+                    if (result.status == false)
                     {
                         _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, result.reason, OkDialogType.Warning);
                         return false;
@@ -978,7 +981,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             return true;
         }
 
-        private async Task<(string status, string reason)> StartMESWithDelayAsync(string snr, string reference, double delayMinutes)
+        private async Task<(bool status, string reason)> StartMESWithDelayAsync(string snr, string reference, double delayMinutes)
         {
             string date = DateTime.Now.AddMinutes(delayMinutes).ToString(_session.DateFormat, CultureInfo.InvariantCulture);
             string workcenter = _session.WorkCenter;
@@ -986,7 +989,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             return await _api.StartMESAsync(workcenter, reference, date, snr, "1", "10", _session);
         }
 
-        private async Task<(string status, string reason)> StartMESNowAsync(string snr, string reference)
+        private async Task<(bool status, string reason)> StartMESNowAsync(string snr, string reference)
         {
             string date = DateTime.Now.ToString(_session.DateFormat, CultureInfo.InvariantCulture);
             string workcenter = _session.WorkCenter;
@@ -1000,7 +1003,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             PrintResult(false, message);
         }
 
-        private void ShowInterlockFailDialog(string errCode, string errDesc)
+        private void ShowInterlockFailDialog(int errCode, string errDesc)
         {
             _dialogService.ShowDialog(
                 DialogNames.UnterlockFailDialog,
