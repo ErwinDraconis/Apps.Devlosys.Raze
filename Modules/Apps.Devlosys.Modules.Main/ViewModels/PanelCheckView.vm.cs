@@ -119,26 +119,28 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             Positions.AddRange(panelsResult);
 
             // Loop through all PCBs and perform iTAC booking on OK part first
-            foreach (var position in panelsResult)
+            try
             {
-                if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
+                foreach (var position in panelsResult)
                 {
+                    if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
+                    {
 #if RELEASE
-                    try
-                    {
+                        Log.Information($"ProcessBooking for SN {position.SerialNumber} which has a result of {position.Status}");
                         await ProcessBookingAsync(position.SerialNumber);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"Exception Occured : ProcessBookingAsync : {ex.Message} {Environment.NewLine} {ex.StackTrace} ");
-                        _dialogService.ShowDialog(
-                                "Exception Occured",
-                                new DialogParameters($"title=Exception Occured &message={ex.Message}")
-                            );
-                    }
 #endif
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Log.Error($"Exception Occured : ProcessBookingAsync : {ex.Message} {Environment.NewLine} {ex.InnerException} ");
+                _dialogService.ShowDialog(
+                        "Exception Occured",
+                        new DialogParameters($"title=Exception Occured &message={ex.Message}")
+                    );
+            }
+
 
             
             // Loop through all PCBs and show Interlock window for scrapped ones

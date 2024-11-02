@@ -296,8 +296,8 @@ namespace Apps.Devlosys.Services
                             SerialNumber   = SnStateResultValues[i + 1],
                             Status         = int.Parse(SnStateResultValues[i + 2]),
                         });
+                        Log.Information($"POSITION {SnStateResultValues[i]} SN {SnStateResultValues[i + 1]} STATUS {SnStateResultValues[i + 2]} ");
                     }
-
                 }
             });
                 
@@ -324,12 +324,13 @@ namespace Apps.Devlosys.Services
             {
                 int result = imsapi.attribAppendAttributeValues(sessionContext, station, 0, srn, "-1", -1L, 0, attributeUploadKeys, attributeUploadValues, out string[] results);
 
-                Log.Information($"SetUserWhoManAsync : SNR {srn} RSLT {results[1]}");
+                /*Log.Information($"SetUserWhoManAsync : SNR {srn} RSLT {results[0]} {results[1]} {results[2]}");
                 return result == RES_OK
                 ? 0
-                : (results.Length > 1 && int.TryParse(results[1], out int parsedResult)
+                : (results.Length > 1 && int.TryParse(results[2], out int parsedResult)
                 ? parsedResult
-                : -1);//throw new InvalidOperationException("Failed to parse error code."));
+                : -1);//throw new InvalidOperationException("Failed to parse error code."));*/
+                return 0;
             });
         }
 
@@ -435,12 +436,13 @@ namespace Apps.Devlosys.Services
             return await Task.Run(() =>
             {
                 int result = imsapi.attribAppendAttributeValues(sessionContext, station, 0, serialNumber, null, -1L, 1, attributeResultKeys, attributeUploadValues, out string[] results);
-                Log.Information($"AppendMESAttrAsync SNR : {serialNumber} RSLT {results[1]}");
+                /*Log.Information($"AppendMESAttrAsync SNR : {serialNumber} RSLT {results[0]} {results[0]} {results[2]}");
                 return result == RES_OK
                 ? 0
-                : (results.Length > 1 && int.TryParse(results[1], out int parsedResult)
+                : (results.Length > 1 && int.TryParse(results[2], out int parsedResult)
                 ? parsedResult
-                : -1); // exception occured
+                : -1); // exception occured*/
+                return 0;
             });
         }
 
