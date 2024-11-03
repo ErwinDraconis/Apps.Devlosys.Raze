@@ -591,6 +591,22 @@ namespace Apps.Devlosys.Services
             Log.Information($"LockSerialAsync SNR {srn} RSLT {result}");
         }
 
+        public async Task<bool> SplitSnFromPanelAsync(string station, string snr)
+        {
+            string[] splitPanelKeys = { "ERROR_CODE", "SERIAL_NUMBER_REF", "SERIAL_NUMBER_REF_POS" };
+            string[] splitPanelValues = { "" };
+
+            var result = await Task.Run(() =>
+            {
+                return imsapi.trSplitPanel(sessionContext, station, snr, "-1", -1, splitPanelKeys, splitPanelValues, out string[] splitPanelResults);
+            });
+
+            Log.Information($"SplitSnFromPanel SNR {snr}, function result {result}, RSLT {splitPanelValues[0]}");
+
+            return result == RES_OK;
+        }
+
+
         public async Task<(bool Success, string Message)> UploadFileAsync(string beautyXML, string username, string password)
         {
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "xml");
@@ -617,7 +633,7 @@ namespace Apps.Devlosys.Services
             }
         }
 
-
+        
         private static async Task<(bool status, string reason)> SendApiAsync(string body, string barflow)
         {
             try

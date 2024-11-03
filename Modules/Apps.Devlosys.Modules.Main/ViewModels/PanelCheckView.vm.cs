@@ -15,6 +15,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -119,9 +120,10 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             Positions.AddRange(panelsResult);
 
             // Loop through all PCBs and perform iTAC booking on OK part first
-            try
+
+            foreach (var position in panelsResult)
             {
-                foreach (var position in panelsResult)
+                try
                 {
                     if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                     {
@@ -130,19 +132,16 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         await ProcessBookingAsync(position.SerialNumber);
 #endif
                     }
+
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Exception Occured : ProcessBookingAsync - Exception occured for SN {position.SerialNumber} - error : {ex.Message} {Environment.NewLine} {ex.InnerException} ");
+                    _dialogService.ShowOkDialog(
+                            "Exception Occured", $"title=Exception Occured &message={ex.Message}", OkDialogType.Error);
                 }
             }
-            catch (Exception ex)
-            {
-                Log.Error($"Exception Occured : ProcessBookingAsync : {ex.Message} {Environment.NewLine} {ex.InnerException} ");
-                _dialogService.ShowDialog(
-                        "Exception Occured",
-                        new DialogParameters($"title=Exception Occured &message={ex.Message}")
-                    );
-            }
-
-
-            
+                        
             // Loop through all PCBs and show Interlock window for scrapped ones
             foreach (var position in panelsResult)
             {
@@ -177,17 +176,16 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     }
                     else
                     {
-                        var check = _dialogService.ShowDialog(
-                            "Re-try iTAC booking",
-                            new DialogParameters($"title=iTAC Booking Failed &message=iTAC booking for {SerialNumber} failed. Do you want to retry?")
+                        _dialogService.ShowConfirmation("Re-try iTAC booking", 
+                            $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
+                            OnConfirm: () => {  },
+                            OnCancel: ()  =>
+                                {
+                                    // Change color on the display to show that this board has failed in iTAC or MES booking
+                                    Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
+                                    return;
+                                }
                         );
-
-                        if (check == ButtonResult.No)
-                        {
-                            // Change color on the display to show that this board has failed in iTAC or MES booking
-                            Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
-                            return;
-                        }
                     }
                 }
             }
@@ -215,30 +213,30 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         }
                         else
                         {
-                            var check = _dialogService.ShowDialog(
-                                "Re-try iTAC booking",
-                                new DialogParameters($"title=iTAC Booking Failed &message=iTAC booking for {SerialNumber} failed, reason {message}. Do you want to retry?")
+                            _dialogService.ShowConfirmation("Re-try iTAC booking",
+                            $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
+                                OnConfirm: () =>  { },
+                                OnCancel: ()  =>
+                                    {
+                                    Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
+                                    return;
+                                    }
                             );
-
-                            if (check == ButtonResult.No)
-                            {
-                                Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
-                                return; 
-                            }
                         }
                     }
                 }
                 else
                 {
-                    var check = _dialogService.ShowDialog(
-                        "Re-try MES booking",
-                        new DialogParameters($"title=MES Booking Failed &message=MES booking for {SerialNumber} failed, reason: {message}. Do you want to retry?")
+                    _dialogService.ShowConfirmation("Re-try MES booking",
+                            $"MES Booking Failed.\r\n MES booking for {SerialNumber} failed ,reason: {message}. Do you want to retry?",
+                            OnConfirm: () => { },
+                            OnCancel: ()  =>
+                                {
+                                    Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
+                                    return;
+                                }
                     );
-                    if (check == ButtonResult.No)
-                    {
-                        Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
-                        return; 
-                    }
+                    
                 }
             }
 
@@ -246,7 +244,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task<(bool success, string message)> StartiTACBookingAsync(string snr)
         {
-            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE" ], null);
+            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
 
             if (result)
             {
@@ -255,7 +253,14 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 if (!result)
                 {
                     string error = $"SN Info for {snr} could not be retrieved! Error: {await _api.GetErrorTextAsync(codeInfo)}";
-                    return (true, error);
+                    return (false, error);
+                }
+                
+                bool splitSuccess = await _api.SplitSnFromPanelAsync(_session.Station, snr);
+                if (!splitSuccess)
+                {
+                    string splitError = $"Split operation for {snr} failed!";
+                    return (false, splitError);
                 }
 
                 return (true, $"iTAC booking for {snr} succeeded.");
@@ -266,6 +271,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return (false, error);
             }
         }
+
 
         private async Task<(bool success, string message)> MesBookingAsync(string snr)
         {

@@ -63,6 +63,8 @@ namespace Apps.Devlosys.Services.Interfaces
 
         Task<int> AppendMESAttrAsync(string station, string serialNumber);
 
+        Task<bool> SplitSnFromPanelAsync(string station, string snr);
+
         string GetErrorText(int result);
 
         Task<string> GetErrorTextAsync(int result);

@@ -1,11 +1,57 @@
-﻿namespace Apps.Devlosys.Infrastructure.Models
+﻿using System.ComponentModel;
+
+namespace Apps.Devlosys.Infrastructure.Models
 {
-    public class PanelPositions
+    public class PanelPositions : INotifyPropertyChanged
     {
-        public int PositionNumber { get; set; }
+        private int    _positionNumber;
+        private string _serialNumber;
+        private int    _status;
 
-        public string SerialNumber { get; set; }
+        public int PositionNumber
+        {
+            get => _positionNumber;
+            set
+            {
+                if (_positionNumber != value)
+                {
+                    _positionNumber = value;
+                    OnPropertyChanged(nameof(PositionNumber));
+                }
+            }
+        }
 
-        public int Status { get; set; }
+        public string SerialNumber
+        {
+            get => _serialNumber;
+            set
+            {
+                if (_serialNumber != value)
+                {
+                    _serialNumber = value;
+                    OnPropertyChanged(nameof(SerialNumber));
+                }
+            }
+        }
+
+        public int Status
+        {
+            get => _status;
+            set
+            {
+                if (_status != value)
+                {
+                    _status = value;
+                    OnPropertyChanged(nameof(Status));
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }
