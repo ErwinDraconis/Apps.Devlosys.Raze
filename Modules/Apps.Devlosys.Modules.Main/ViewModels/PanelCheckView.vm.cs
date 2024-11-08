@@ -172,13 +172,14 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
                     if (success)
                     {
+                        await _api.LockSerialAsync(_session.Station, SerialNumber);
                         return; 
                     }
                     else
                     {
                         _dialogService.ShowConfirmation("Re-try iTAC booking", 
                             $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
-                            OnConfirm: () => {  },
+                            OnConfirm: () => { Log.Information($"Re-try iTAC booking SN {SerialNumber} L181"); },
                             OnCancel: ()  =>
                                 {
                                     // Change color on the display to show that this board has failed in iTAC or MES booking
@@ -215,7 +216,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         {
                             _dialogService.ShowConfirmation("Re-try iTAC booking",
                             $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
-                                OnConfirm: () =>  { },
+                                OnConfirm: () =>  { Log.Information($"Re-try iTAC booking SN {SerialNumber} L218"); },
                                 OnCancel: ()  =>
                                     {
                                     Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
@@ -229,7 +230,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 {
                     _dialogService.ShowConfirmation("Re-try MES booking",
                             $"MES Booking Failed.\r\n MES booking for {SerialNumber} failed ,reason: {message}. Do you want to retry?",
-                            OnConfirm: () => { },
+                            OnConfirm: () => { Log.Information($"Re-try MES booking SN {SerialNumber} L232"); },
                             OnCancel: ()  =>
                                 {
                                     Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
@@ -244,69 +245,86 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task<(bool success, string message)> StartiTACBookingAsync(string snr)
         {
-            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
-
-            if (result)
+            try
             {
-                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER" ]);
+                (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
 
-                if (!result)
+                if (result)
                 {
-                    string error = $"SN Info for {snr} could not be retrieved! Error: {await _api.GetErrorTextAsync(codeInfo)}";
+                    (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER"]);
+
+                    if (!result)
+                    {
+                        string error = $"SN Info for {snr} could not be retrieved! Error: {await _api.GetErrorTextAsync(codeInfo)}";
+                        return (false, error);
+                    }
+
+                    bool splitSuccess = await _api.SplitSnFromPanelAsync(_session.Station, snr);
+                    /*if (!splitSuccess)
+                    {
+                        string splitError = $"Split operation for {snr} failed!";
+                        return (false, splitError);
+                    }*/
+
+                    return (true, $"iTAC booking for {snr} succeeded.");
+                }
+                else
+                {
+                    string error = $"iTAC booking for {snr} failed! Error: {await _api.GetErrorTextAsync(code)}";
                     return (false, error);
                 }
-                
-                bool splitSuccess = await _api.SplitSnFromPanelAsync(_session.Station, snr);
-                if (!splitSuccess)
-                {
-                    string splitError = $"Split operation for {snr} failed!";
-                    return (false, splitError);
-                }
-
-                return (true, $"iTAC booking for {snr} succeeded.");
             }
-            else
+            catch (Exception ex) 
             {
-                string error = $"iTAC booking for {snr} failed! Error: {await _api.GetErrorTextAsync(code)}";
-                return (false, error);
+                Log.Error($"StartiTACBookingAsync - SN {snr}, reason : " + ex.StackTrace);
+                return (false, ex.Message);
             }
+            
         }
 
 
         private async Task<(bool success, string message)> MesBookingAsync(string snr)
         {
-            bool MES_BOOKING_RSLT = false;
-            bool success   = false; 
-            string message = string.Empty; 
-
-            for (int i = 0; i < 5; i++)
+            try
             {
-                (success, message) = await MesSavingProductAsync(snr);
-                if (success)
+                bool MES_BOOKING_RSLT = false;
+                bool success = false;
+                string message = string.Empty;
+
+                for (int i = 0; i < 3; i++)
                 {
-                    MES_BOOKING_RSLT = true;
-                    break;
+                    (success, message) = await MesSavingProductAsync(snr);
+                    if (success)
+                    {
+                        MES_BOOKING_RSLT = true;
+                        break;
+                    }
+                    else
+                    {
+                        await Task.Delay(100);
+                    }
+                }
+
+                if (MES_BOOKING_RSLT)
+                {
+                    return (true, $"MES booking for {snr}: Succeeded");
                 }
                 else
                 {
-                    await Task.Delay(100);
-                }    
+                    return (false, $"MES booking for {snr}: Failed, error : {message}");
+                }
             }
-
-            if (MES_BOOKING_RSLT)
+            catch (Exception ex) 
             {
-                return (true, $"MES booking for {snr}: Succeeded");
-            }
-            else
-            {
-                return (false, $"MES booking for {snr}: Failed, error : {message}");
+                Log.Error($"MesBookingAsync - SN {snr}, reason : " + ex.StackTrace);
+                return (false, ex.Message);
             }
         }
 
 
         private async Task<(bool success, string message)> MesSavingProductAsync(string snr)
         {
-            string lastSnr = (_session.LabelType == LabelTypeEnum.TG01) ? snr.Between("_", "_") : snr.Substring(4, 10).ToString();
+            string lastSnr = (SNR.Contains("_")) ? SNR.Between("_", "_") : SNR.Substring(4, 10).ToString();
 
             var data = GetDataForLabel(lastSnr);
             if (data == null)

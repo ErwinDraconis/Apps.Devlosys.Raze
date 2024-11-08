@@ -324,8 +324,8 @@ namespace Apps.Devlosys.Services
             {
                 int result = imsapi.attribAppendAttributeValues(sessionContext, station, 0, srn, "-1", -1L, 0, attributeUploadKeys, attributeUploadValues, out string[] results);
 
-                /*Log.Information($"SetUserWhoManAsync : SNR {srn} RSLT {results[0]} {results[1]} {results[2]}");
-                return result == RES_OK
+                Log.Information($"SetUserWhoManAsync : SNR {srn} RSLT {results[0]} API result {result}");
+                /*return result == RES_OK
                 ? 0
                 : (results.Length > 1 && int.TryParse(results[2], out int parsedResult)
                 ? parsedResult
@@ -409,10 +409,20 @@ namespace Apps.Devlosys.Services
             return await Task.Run(() =>
             {
                 int result = imsapi.attribGetAttributeValues(sessionContext, station, 0, serialNumber, null, attributeCodeArray, 0, attributeResultKeys, out string[] results);
-                Log.Information($"VerifyMESAttrAsync SNR {serialNumber} RSLT {results[1]}");
-                return result != RES_OK ? -1 
-                :(results.Length > 1 && int.TryParse(results[1], out int parsedResult) 
-                ? parsedResult : -1);
+                if (results.Length > 1)
+                {
+                    Log.Information($"VerifyMESAttrAsync SNR {serialNumber} RSLT {results[1]}");
+                    return result != RES_OK ? -1
+                    : (results.Length > 1 && int.TryParse(results[1], out int parsedResult)
+                    ? parsedResult : -1);
+                }
+                else
+                {
+                    Log.Error($"VerifyMESAttrAsync SNR {serialNumber} RSLT {result}");
+                    return result;
+                    
+                }
+                
             });
         }
 
@@ -436,8 +446,8 @@ namespace Apps.Devlosys.Services
             return await Task.Run(() =>
             {
                 int result = imsapi.attribAppendAttributeValues(sessionContext, station, 0, serialNumber, null, -1L, 1, attributeResultKeys, attributeUploadValues, out string[] results);
-                /*Log.Information($"AppendMESAttrAsync SNR : {serialNumber} RSLT {results[0]} {results[0]} {results[2]}");
-                return result == RES_OK
+                Log.Information($"AppendMESAttrAsync SNR : {serialNumber} RSLT {results[0]} API Result {result}");
+                /*return result == RES_OK
                 ? 0
                 : (results.Length > 1 && int.TryParse(results[2], out int parsedResult)
                 ? parsedResult
