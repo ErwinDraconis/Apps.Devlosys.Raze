@@ -31,7 +31,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         public event EventHandler<FocusRequestedEventArgs> FocusRequested;
         private readonly IDialogService _dialogService;
         private readonly IIMSApi _api;
-        private AppSession       _session;
+        private AppSession _session;
 
         #endregion
 
@@ -101,14 +101,14 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         private async Task LoadPositions()
         {
             var panelsResult = await _api.GetPanelSNStateAsync(_session.Station, SNR);
- 
+
             if (panelsResult == null || panelsResult.Count == 0)
             {
                 string error = $"There is no panel record found for this SN [{SNR}]. An empty list is returned: count {panelsResult?.Count}";
                 _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
                 return;
             }
- 
+
             if (panelsResult.Count == 1)
             {
                 string error = "PCB does not belong to Panel anymore, this configuration is not allowed! Part will not be booked.";
@@ -141,7 +141,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                             "Exception Occured", $"title=Exception Occured &message={ex.Message}", OkDialogType.Error);
                 }
             }
-                        
+
             // Loop through all PCBs and show Interlock window for scrapped ones
             foreach (var position in panelsResult)
             {
@@ -156,15 +156,15 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     );
                 }
             }
-            
-            
+
+
         }
 
         private async Task ProcessBookingAsync(string SerialNumber)
         {
             // Verify if iTAC attributes exist  
             var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SerialNumber);
-            if (isAttrAppended == 0) 
+            if (isAttrAppended == 0)
             {
                 while (true)
                 {
@@ -172,30 +172,23 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
                     if (success)
                     {
-                        await _api.LockSerialAsync(_session.Station, SerialNumber);
-                        return; 
+                        return;
                     }
                     else
                     {
-                        _dialogService.ShowConfirmation("Re-try iTAC booking", 
+                        _dialogService.ShowConfirmation("Re-try iTAC booking",
                             $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
-                            OnConfirm: () => { Log.Information($"Re-try iTAC booking SN {SerialNumber} L181"); },
-                            OnCancel: ()  =>
-                                {
-                                    // Change color on the display to show that this board has failed in iTAC or MES booking
-                                    Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
-                                    return;
-                                }
+                            OnConfirm: () => { },
+                            OnCancel: () =>
+                            {
+                                // Change color on the display to show that this board has failed in iTAC or MES booking
+                                Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
+                                return;
+                            }
                         );
                     }
                 }
             }
-
-
-            // Attribute does not exist, append attributes and perform MES and iTAC booking
-            var _attrRslt = await _api.SetUserWhoManAsync(_session.Station, SerialNumber, _session.UserName);
-            _attrRslt    |= await _api.AppendMESAttrAsync(_session.Station, SerialNumber);
-            
 
             // Set up for retry logic for MES booking  
             while (true)
@@ -204,24 +197,24 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
                 if (success)
                 {
-                    while (true) 
+                    while (true)
                     {
                         (success, message) = await StartiTACBookingAsync(SerialNumber);
                         if (success)
                         {
                             await _api.LockSerialAsync(_session.Station, SerialNumber);
-                            return; 
+                            return;
                         }
                         else
                         {
                             _dialogService.ShowConfirmation("Re-try iTAC booking",
                             $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
-                                OnConfirm: () =>  { Log.Information($"Re-try iTAC booking SN {SerialNumber} L218"); },
-                                OnCancel: ()  =>
-                                    {
+                                OnConfirm: () => { },
+                                OnCancel: () =>
+                                {
                                     Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
                                     return;
-                                    }
+                                }
                             );
                         }
                     }
@@ -230,14 +223,14 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 {
                     _dialogService.ShowConfirmation("Re-try MES booking",
                             $"MES Booking Failed.\r\n MES booking for {SerialNumber} failed ,reason: {message}. Do you want to retry?",
-                            OnConfirm: () => { Log.Information($"Re-try MES booking SN {SerialNumber} L232"); },
-                            OnCancel: ()  =>
-                                {
-                                    Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
-                                    return;
-                                }
+                            OnConfirm: () => { },
+                            OnCancel: () =>
+                            {
+                                Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
+                                return;
+                            }
                     );
-                    
+
                 }
             }
 
@@ -245,91 +238,79 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task<(bool success, string message)> StartiTACBookingAsync(string snr)
         {
-            try
+            (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
+
+            if (result)
             {
-                (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
+                (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER"]);
 
-                if (result)
+                if (!result)
                 {
-                    (result, string[] outResults, int codeInfo) = await _api.GetSerialNumberInfoAsync(_session.Station, snr, ["PART_DESC", "SERIAL_NUMBER", "PART_NUMBER"]);
-
-                    if (!result)
-                    {
-                        string error = $"SN Info for {snr} could not be retrieved! Error: {await _api.GetErrorTextAsync(codeInfo)}";
-                        return (false, error);
-                    }
-
-                    bool splitSuccess = await _api.SplitSnFromPanelAsync(_session.Station, snr);
-                    /*if (!splitSuccess)
-                    {
-                        string splitError = $"Split operation for {snr} failed!";
-                        return (false, splitError);
-                    }*/
-
-                    return (true, $"iTAC booking for {snr} succeeded.");
-                }
-                else
-                {
-                    string error = $"iTAC booking for {snr} failed! Error: {await _api.GetErrorTextAsync(code)}";
+                    string error = $"SN Info for {snr} could not be retrieved! Error: {await _api.GetErrorTextAsync(codeInfo)}";
                     return (false, error);
                 }
+
+                bool splitSuccess = await _api.SplitSnFromPanelAsync(_session.Station, snr);
+                /*if (!splitSuccess)
+                {
+                    string splitError = $"Split operation for {snr} failed!";
+                    return (false, splitError);
+                }*/
+
+                return (true, $"iTAC booking for {snr} succeeded.");
             }
-            catch (Exception ex) 
+            else
             {
-                Log.Error($"StartiTACBookingAsync - SN {snr}, reason : " + ex.StackTrace);
-                return (false, ex.Message);
+                string error = $"iTAC booking for {snr} failed! Error: {await _api.GetErrorTextAsync(code)}";
+                return (false, error);
             }
-            
         }
 
 
         private async Task<(bool success, string message)> MesBookingAsync(string snr)
         {
-            try
+            bool MES_BOOKING_RSLT = false;
+            bool success = false;
+            string message = string.Empty;
+
+            for (int i = 0; i < 5; i++)
             {
-                bool MES_BOOKING_RSLT = false;
-                bool success = false;
-                string message = string.Empty;
-
-                for (int i = 0; i < 3; i++)
+                (success, message) = await MesSavingProductAsync(snr);
+                if (success)
                 {
-                    (success, message) = await MesSavingProductAsync(snr);
-                    if (success)
-                    {
-                        MES_BOOKING_RSLT = true;
-                        break;
-                    }
-                    else
-                    {
-                        await Task.Delay(100);
-                    }
-                }
+                    await _api.SetUserWhoManAsync(_session.Station, snr, _session.UserName);
 
-                if (MES_BOOKING_RSLT)
-                {
-                    return (true, $"MES booking for {snr}: Succeeded");
+                    await _api.AppendMESAttrAsync(_session.Station, snr);
+
+                    MES_BOOKING_RSLT = true;
+
+                    break;
                 }
                 else
                 {
-                    return (false, $"MES booking for {snr}: Failed, error : {message}");
+                    await Task.Delay(100);
                 }
             }
-            catch (Exception ex) 
+
+            if (MES_BOOKING_RSLT)
             {
-                Log.Error($"MesBookingAsync - SN {snr}, reason : " + ex.StackTrace);
-                return (false, ex.Message);
+                return (true, $"MES booking for {snr}: Succeeded");
+            }
+            else
+            {
+                return (false, $"MES booking for {snr}: Failed, error : {message}");
             }
         }
 
 
         private async Task<(bool success, string message)> MesSavingProductAsync(string snr)
         {
+            //string lastSnr = (_session.LabelType == LabelTypeEnum.TG01) ? snr.Between("_", "_") : snr.Substring(4, 10).ToString();
             string lastSnr = (SNR.Contains("_")) ? SNR.Between("_", "_") : SNR.Substring(4, 10).ToString();
-
             var data = GetDataForLabel(lastSnr);
             if (data == null)
             {
-                return (false,$"Label data not available for SN {lastSnr}");
+                return (false, $"Label data not available for SN {lastSnr}");
             }
 
             string reference = Regex.Replace(data.FinGood, "^0*", "");
@@ -397,7 +378,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
-        private void ShowInterlockFailDialog(string errCode, string errDesc,string SerialNumber)
+        private void ShowInterlockFailDialog(string errCode, string errDesc, string SerialNumber)
         {
             _dialogService.ShowDialog(
                 DialogNames.UnterlockFailDialog,
@@ -412,7 +393,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         public void OnUnloaded()
         {
-           
+
         }
 
         #endregion
