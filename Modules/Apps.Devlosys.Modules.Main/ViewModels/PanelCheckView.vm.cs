@@ -12,6 +12,7 @@ using Prism.Services.Dialogs;
 using Serilog;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -24,7 +25,7 @@ using System.Windows.Markup;
 
 namespace Apps.Devlosys.Modules.Main.ViewModels
 {
-    public class PanelCheckViewModel : ViewModelBase, IViewLoadedAndUnloadedAware, IRequestFocus
+    public class PanelCheckViewModel : ViewModelBase, IViewLoadedAndUnloadedAware, IRequestFocus, INotificable
     {
         #region Private variables
 
@@ -65,6 +66,15 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             set => SetProperty(ref _positions, value);
         }
 
+        private bool _isTxtEnabled = true;
+        public bool isTxtEnabled
+        {
+            get => _isTxtEnabled;
+            set => SetProperty(ref _isTxtEnabled, value);
+        }
+
+        public ISnackbarMessageQueue GlobalMessageQueue { get; set; }
+
         #endregion
 
         #region Commands
@@ -77,12 +87,23 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async void OnScanCommandHandler()
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            isTxtEnabled = false;
             Positions.Clear();
 
             await LoadPositions();
 
-            OnFocusRequested("SNR");
             SNR = string.Empty;
+            isTxtEnabled = true;
+            OnFocusRequested("SNR");
+
+            stopwatch.Stop();
+            GlobalMessageQueue.Enqueue($"Extracted PCBs [{Positions.Count}], " +
+                $"Treatment Time: {(stopwatch.Elapsed.TotalMinutes >= 1 ? $"{stopwatch.Elapsed.TotalMinutes:F2} min" 
+                : stopwatch.Elapsed.TotalSeconds >= 1 ? $"{stopwatch.Elapsed.TotalSeconds:F2} s" 
+                : $"{stopwatch.Elapsed.TotalMilliseconds:F2} ms")}");
         }
 
         #endregion
@@ -162,6 +183,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task ProcessBookingAsync(string SerialNumber)
         {
+            bool loop = false;
+
             // Verify if iTAC attributes exist  
             var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SerialNumber);
             if (isAttrAppended == 0)
@@ -178,16 +201,18 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     {
                         _dialogService.ShowConfirmation("Re-try iTAC booking",
                             $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
-                            OnConfirm: () => { },
+                            OnConfirm: () => { loop = true; },
                             OnCancel: () =>
                             {
                                 // Change color on the display to show that this board has failed in iTAC or MES booking
                                 Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
-                                return;
+                                loop = false; return;
                             }
                         );
+                        if (!loop) break;
                     }
                 }
+                return;
             }
 
             // Set up for retry logic for MES booking  
@@ -209,28 +234,30 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         {
                             _dialogService.ShowConfirmation("Re-try iTAC booking",
                             $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
-                                OnConfirm: () => { },
+                                OnConfirm: () => { loop = true; },
                                 OnCancel: () =>
                                 {
                                     Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
-                                    return;
+                                    loop = false; return;
                                 }
                             );
+                            if (!loop) break;
                         }
                     }
+                    break;
                 }
                 else
                 {
                     _dialogService.ShowConfirmation("Re-try MES booking",
                             $"MES Booking Failed.\r\n MES booking for {SerialNumber} failed ,reason: {message}. Do you want to retry?",
-                            OnConfirm: () => { },
+                            OnConfirm: () => { loop = true; },
                             OnCancel: () =>
                             {
                                 Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).Status = 10;
-                                return;
+                                loop = false; return;
                             }
                     );
-
+                    if (!loop) break;
                 }
             }
 

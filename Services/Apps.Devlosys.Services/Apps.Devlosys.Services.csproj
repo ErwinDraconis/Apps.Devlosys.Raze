@@ -18,8 +18,7 @@
 
 	<ItemGroup>
 	  <Reference Include="IMSApiDotNet">
-	    <HintPath>..\..\Apps.Devlosys.Test\bin\Debug\net461\IMSApiDotNet.dll</HintPath>
-	    <Private>True</Private>
+	    <HintPath>..\..\Build\Release\Bin-0.0.1\net461\net461\IMSApiDotNet.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 

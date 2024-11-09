@@ -526,26 +526,24 @@ namespace Apps.Devlosys.Services
 
 #if DEBUG
 
-            var fictiveNumberOfBoards = new Random().Next(10, 50);
+            var fictiveNumberOfBoards = new Random().Next(5, 16);
 
             Random random = new Random();
 
             for (int i = 0; i < fictiveNumberOfBoards; i++)
-
             {
-
                 panelRslt.Add(new PanelPositions
 
                 {
 
                     PositionNumber = i + 1,
 
-                    SerialNumber = "99999_99999_9999",
+                    SerialNumber = "99999_99999_99999",
 
-                    Status = random.Next(0, 7),
+                    Status = random.Next(0, 4),
 
                 });
-
+                await Task.Delay(100);
             }
 
             return panelRslt;
@@ -802,28 +800,19 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         public async Task<int> VerifyMESAttrAsync(string station, string serialNumber)
-
         {
-
             string[] attributeCodeArray = ["MES_Booking"];
 
             string[] attributeResultKeys = ["ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE"];
 
-
-
             return await Task.Run(() =>
 
             {
-
                 int result = imsapi.attribGetAttributeValues(sessionContext, station, 0, serialNumber, null, attributeCodeArray, 0, attributeResultKeys, out string[] results);
 
                 if (results.Length > 1)
-
                 {
-
                     Log.Information($"VerifyMESAttrAsync SNR {serialNumber} RSLT {results[1]}");
 
                     return result != RES_OK ? -1
@@ -833,28 +822,18 @@ namespace Apps.Devlosys.Services
                     ? parsedResult : -1);
 
                 }
-
                 else
-
                 {
                     // -911 mean no attribute foud
                     Log.Error($"VerifyMESAttrAsync SNR {serialNumber} RSLT {result}, attribute does not exist");
 
                     return result;
 
-
-
                 }
-
-
 
             });
 
         }
-
-
-
-
 
         public int AppendMESAttr(string station, string serialNumber)
 
@@ -1223,7 +1202,7 @@ namespace Apps.Devlosys.Services
             });
 
 
-
+            if (!string.IsNullOrEmpty(splitPanelValues[0]))
             Log.Information($"SplitSnFromPanel SNR {snr}, function result {result}, RSLT {splitPanelValues[0]}");
 
 

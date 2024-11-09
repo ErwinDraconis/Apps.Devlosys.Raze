@@ -35,6 +35,7 @@
 
                             <StackPanel Grid.Row="1" Grid.Column="1">
                                 <TextBox x:Name="SNR" MaxWidth="900"
+                                     IsEnabled="{Binding isTxtEnabled}"
                                      Text="{Binding SNR, UpdateSourceTrigger=PropertyChanged}"
                                      FontSize="18" FontWeight="Medium"
                                      Margin="{StaticResource Space}"
