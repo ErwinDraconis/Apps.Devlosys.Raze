@@ -263,7 +263,7 @@ namespace Apps.Devlosys.Infrastructure
         PART_OK    = 0,
         PART_FAIL  = 1,
         PART_SCRAP = 2,
-        Unknown    = -1,
+        PART_Unknown = -1,
     }
 
     #region App States Enum

@@ -6,6 +6,7 @@
              xmlns:enums="clr-namespace:Apps.Devlosys.Infrastructure;assembly=Apps.Devlosys.Infrastructure"
              xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
              xmlns:ctrl="clr-namespace:Apps.Devlosys.Controls.Converters;assembly=Apps.Devlosys.Controls"
+             xmlns:wpfAnimatedGif="http://wpfanimatedgif.codeplex.com"
              x:Name="_window">
 
     <UserControl.Resources>
@@ -33,7 +34,7 @@
                                 <RowDefinition />
                             </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="1" Grid.Column="1">
+                            <StackPanel Grid.Row="1" Grid.Column="1" >
                                 <TextBox x:Name="SNR" MaxWidth="900"
                                      IsEnabled="{Binding isTxtEnabled}"
                                      Text="{Binding SNR, UpdateSourceTrigger=PropertyChanged}"
@@ -47,6 +48,14 @@
                                                 Command="{Binding OnScanCommand}" />
                                     </TextBox.InputBindings>
                                 </TextBox>
+
+                                <Image 
+                                    Grid.Column="1"
+                                    Width="40" Height="40"
+                                    VerticalAlignment="Top" 
+                                    Visibility="{Binding isLoadingGifVisible}"
+                                    wpfAnimatedGif:ImageBehavior.AnimatedSource="/Apps.Devlosys.Modules.Main;component/Views/loading.gif"  
+                                    />
                             </StackPanel>
                         </Grid>
 

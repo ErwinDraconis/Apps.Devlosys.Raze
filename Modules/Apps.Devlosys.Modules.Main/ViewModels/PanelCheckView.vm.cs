@@ -16,11 +16,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
-using System.Windows.Markup;
 
 
 namespace Apps.Devlosys.Modules.Main.ViewModels
@@ -73,6 +72,14 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             set => SetProperty(ref _isTxtEnabled, value);
         }
 
+        private Visibility _isLoadingGifVisible = Visibility.Collapsed;
+
+        public Visibility isLoadingGifVisible
+        {
+            get => _isLoadingGifVisible; 
+            set => SetProperty(ref _isLoadingGifVisible, value);
+        }
+
         public ISnackbarMessageQueue GlobalMessageQueue { get; set; }
 
         #endregion
@@ -90,13 +97,13 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            isTxtEnabled = false;
+            isTxtEnabled = false; isLoadingGifVisible = Visibility.Visible;
             Positions.Clear();
 
             await LoadPositions();
 
             SNR = string.Empty;
-            isTxtEnabled = true;
+            isTxtEnabled = true; isLoadingGifVisible = Visibility.Collapsed;
             OnFocusRequested("SNR");
 
             stopwatch.Stop();
@@ -138,10 +145,9 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
 
             // populate the view first (so to let the user see which PCB is Ok and which is not)
-            Positions.AddRange(panelsResult);
+            Positions.AddRange(panelsResult); 
 
             // Loop through all PCBs and perform iTAC booking on OK part first
-
             foreach (var position in panelsResult)
             {
                 try
@@ -164,13 +170,18 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
 
             // Loop through all PCBs and show Interlock window for scrapped ones
+            isLoadingGifVisible = Visibility.Collapsed;
             foreach (var position in panelsResult)
             {
                 Log.Information($"{position.SerialNumber} - {position.PositionNumber} - {position.Status}");
-                if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_SCRAP)
+                if (position.Status != (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                 {
-                    string scrapMessage = $"Scrapped part at position {position.PositionNumber} was found.";
-                    string dialogTitle = "Panel Check - Scrapped part Detected";
+                    iTAC_Check_SN_RSLT_ENUM status = Enum.IsDefined(typeof(iTAC_Check_SN_RSLT_ENUM), position.Status)
+                                                    ? (iTAC_Check_SN_RSLT_ENUM)position.Status
+                                                    : iTAC_Check_SN_RSLT_ENUM.PART_Unknown;
+
+                    string scrapMessage = $"{status} at position {position.PositionNumber} was found.";
+                    string dialogTitle = $"Panel Check - {status} Detected";
                     _dialogService.ShowDialog(
                         DialogNames.UnterlockFailDialog,
                         new DialogParameters($"title={dialogTitle} &SNR={position.SerialNumber}&Description={scrapMessage} &CallerWindow=PanelCheckView")
@@ -187,7 +198,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
             // Verify if iTAC attributes exist  
             var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SerialNumber);
-            if (isAttrAppended == 0)
+            if (isAttrAppended == 1)
             {
                 while (true)
                 {

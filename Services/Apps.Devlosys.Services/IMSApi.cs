@@ -813,22 +813,13 @@ namespace Apps.Devlosys.Services
 
                 if (results.Length > 1)
                 {
-                    Log.Information($"VerifyMESAttrAsync SNR {serialNumber} RSLT {results[1]}");
-
-                    return result != RES_OK ? -1
-
-                    : (results.Length > 1 && int.TryParse(results[1], out int parsedResult)
-
-                    ? parsedResult : -1);
+                    return int.TryParse(results[1], out int parsedResult) ? parsedResult : -1;
 
                 }
                 else
                 {
                     // -911 mean no attribute foud
-                    Log.Error($"VerifyMESAttrAsync SNR {serialNumber} RSLT {result}, attribute does not exist");
-
                     return result;
-
                 }
 
             });
@@ -836,36 +827,24 @@ namespace Apps.Devlosys.Services
         }
 
         public int AppendMESAttr(string station, string serialNumber)
-
         {
 
             string[] attributeResultKeys = new string[3] { "ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE" };
 
             string[] attributeUploadValues = new string[3] { "MES_Booking", "1", "0" };
 
-
-
-            //attribAppendAttributeValues((SessionContext, stationNumber, 0, SN, null, -1, 1, attributeResultKeys{"ATTRIBUTE_CODE","ATTRIBUTE_VALUE","ERROR_CODE"}, attributeUploadValues{"MES_Booking","1",0})
-
             return imsapi.attribAppendAttributeValues(sessionContext, station, 0, serialNumber, null, -1L, 1, attributeResultKeys, attributeUploadValues, out string[] results) == RES_OK
-
-                ? 0
-
-                : int.Parse(results[1]);
+                   ? 0  : int.Parse(results[1]);
 
         }
 
 
 
         public async Task<int> AppendMESAttrAsync(string station, string serialNumber)
-
         {
-
             string[] attributeResultKeys = ["ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE"];
 
             string[] attributeUploadValues = ["MES_Booking", "1", "0"];
-
-
 
             return await Task.Run(() =>
 
@@ -875,17 +854,7 @@ namespace Apps.Devlosys.Services
 
                 Log.Information($"AppendMESAttrAsync SNR : {serialNumber} API Result {result}");
 
-                /*return result == RES_OK
-
-                ? 0
-
-                : (results.Length > 1 && int.TryParse(results[2], out int parsedResult)
-
-                ? parsedResult
-
-                : -1); // exception occured*/
-
-                return 0;
+                return result == RES_OK  ? 0  : -1; 
 
             });
 

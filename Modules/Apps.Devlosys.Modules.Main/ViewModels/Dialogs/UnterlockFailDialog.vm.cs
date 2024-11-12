@@ -25,6 +25,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         private readonly IIMSApi _api;
         private readonly AppSession _session;
         public override event Action<IDialogResult> RequestClose;
+
         private SerialPort _serialPort;
 
         #endregion
@@ -135,6 +136,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             SNR   = parameters.GetValue<string>("SNR");
             Description = parameters.GetValue<string>("Description");
             CallerWindow = parameters.GetValue<string>("CallerWindow");
+
         }
 
         public override bool CanCloseDialog()
@@ -192,5 +194,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         public bool CanUnblockCommand => (NormalizeString(ScanedSN) == NormalizeString(SNR));
 
         #endregion
+
     }
 }

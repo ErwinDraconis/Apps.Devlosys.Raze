@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Apps.Devlosys.Core.Mvvm;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,11 @@ namespace Apps.Devlosys.Modules.Main.Views.Dialogs
         public UnterlockFailDialog()
         {
             InitializeComponent();
+
+            ScanedSN.Focus();
+            ScanedSN.SelectAll();
         }
+
+
     }
 }

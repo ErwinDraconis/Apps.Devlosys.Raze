@@ -6,9 +6,13 @@
 		<AssemblyName>Apps.Devlosys.Modules.Main</AssemblyName>
 		<AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
 	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="Views\loading.gif" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Prism.Wpf" Version="8.1.97" />
+		<PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -16,6 +20,12 @@
 		<ProjectReference Include="..\..\Cores\Apps.Devlosys.Core\Apps.Devlosys.Core.csproj" />
 		<ProjectReference Include="..\..\Cores\Apps.Devlosys.Resources\Apps.Devlosys.Resources.csproj" />
 		<ProjectReference Include="..\..\Services\Apps.Devlosys.Services.Interfaces\Apps.Devlosys.Services.Interfaces.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="Views\loading.gif">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Resource>
 	</ItemGroup>
 
 	<ItemGroup>

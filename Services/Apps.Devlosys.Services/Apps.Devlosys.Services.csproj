@@ -18,7 +18,7 @@
 
 	<ItemGroup>
 	  <Reference Include="IMSApiDotNet">
-	    <HintPath>..\..\Build\Release\Bin-0.0.1\net461\net461\IMSApiDotNet.dll</HintPath>
+	    <HintPath>..\..\Build\Debug\Bin-0.0.1\net461\IMSApiDotNet.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 

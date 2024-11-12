@@ -28,19 +28,19 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
 
-                <materialDesign:PackIcon Grid.Row="0" Kind="ErrorOutline" Foreground="Red" Width="60" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                <materialDesign:PackIcon Grid.Row="0" Kind="ErrorOutline" Foreground="Yellow" Width="60" Height="45" HorizontalAlignment="Center" VerticalAlignment="Center" >
                     <materialDesign:PackIcon.Triggers>
                         <EventTrigger RoutedEvent="Loaded">
                             <BeginStoryboard Storyboard="{StaticResource BlinkAnimation}" />
                         </EventTrigger>
                     </materialDesign:PackIcon.Triggers>
                 </materialDesign:PackIcon>
-                <TextBlock Grid.Row="1" FontSize="36" Text="{Binding SNR}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
-                <TextBlock Grid.Row="2" FontSize="36" Text="{Binding Description}" ></TextBlock>
+                <TextBlock Grid.Row="1" FontSize="26" Text="{Binding SNR}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                <TextBlock Grid.Row="2" FontSize="26" Text="{Binding Description}" ></TextBlock>
 
-                <Grid Grid.Row="3" Margin="40" >
+                <Grid Grid.Row="3" Margin="10" >
                     <StackPanel Grid.Row="2" Grid.Column="1">
-                        <TextBox x:Name="ScanSNTxt" Margin="0 5 0 0" 
+                        <TextBox x:Name="ScanedSN" Margin="0 5 0 0" 
                                  Text="{Binding ScanedSN, UpdateSourceTrigger=PropertyChanged}"
                                  IsEnabled="True"
                                  Padding="{StaticResource TextBoxStyle.Padding}"
@@ -49,8 +49,8 @@
                                  materialDesign:HintAssist.Hint="Scann Serial Number" />
 
 
-                        <Button Margin="0 40 0 0"
-                                Content="{x:Static resx:QualityValidationResource.ButtonOkCaption}" FontSize="18"
+                        <Button Margin="0 20 0 0"
+                                Content="{x:Static resx:QualityValidationResource.ButtonOkCaption}" FontSize="16"
                                 IsDefault="True"
                                 Command="{Binding UnblockCommand}"
                                 Foreground="{StaticResource PrimaryHueDarkForegroundBrush}"
