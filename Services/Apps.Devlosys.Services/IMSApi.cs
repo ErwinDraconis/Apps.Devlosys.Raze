@@ -711,76 +711,37 @@ namespace Apps.Devlosys.Services
 
 
         public async Task<(bool status, string reason)> StartMESAsync(string WorkCenter, string productNumber, string eventDateTime, string serialNumber, string Qte, string CycleTime, AppSession _session)
-
         {
-
             string motherForm = $"<?xml version=\"1.0\"?><FSA_INT_FlatFileManager xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"C:/Inetpub/wwwroot/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd\" Version=\"1.0\"><FIInvocationSynchronousEvent NodeType=\"FIInvocation\"><StandardOperation><OperationResolutionMethod>ByOperationCode</OperationResolutionMethod><OperationCode>SVC_MES_MI_ProductionDeclaration</OperationCode></StandardOperation><Parameters><Inputs><InputName>WorkCenter</InputName><InputValue>{WorkCenter}</InputValue></Inputs><Inputs><InputName>ProductNo</InputName><InputValue>{productNumber}</InputValue></Inputs><Inputs><InputName>EventDateTime</InputName><InputValue>{eventDateTime}</InputValue></Inputs><Inputs><InputName>SerialNo</InputName><InputValue>{serialNumber}</InputValue></Inputs><Inputs><InputName>Quantity</InputName><InputValue>{Qte}</InputValue></Inputs><Inputs><InputName>CycleTime</InputName><InputValue>{CycleTime}</InputValue></Inputs></Parameters></FIInvocationSynchronousEvent></FSA_INT_FlatFileManager>";
-
             string prettyXML = PrettyXml(motherForm);
 
-
-
             try
-
             {
-
                 if (_session.UploadType == Infrastructure.UploadMethodEnum.API)
-
                 {
-
                     var apiResponse = await SendApiAsync(prettyXML, _session.BarFlowServer);
 
-
-
                     if (apiResponse.status == false)
-
                     {
-
                         Log.Error("API call failed : " + apiResponse.reason);
-
                         return (false, apiResponse.reason);
-
                     }
-
                     else
-
                     {
-
                         Log.Information("API call Ok : " + apiResponse.status);
-
                         return (true, null);
-
                     }
-
-
-
                 }
-
                 else
-
                 {
-
                     return await UploadFileAsync(prettyXML, _session.FtpUsername, _session.FtpPassword);
-
                 }
-
-
-
             }
-
             catch (Exception ex)
-
             {
-
                 return (false, $"Error in StartMES: {ex.Message}");
-
             }
-
         }
-
-
-
-
 
         public int VerifyMESAttr(string station, string serialNumber)
 
@@ -811,7 +772,9 @@ namespace Apps.Devlosys.Services
             {
                 int result = imsapi.attribGetAttributeValues(sessionContext, station, 0, serialNumber, null, attributeCodeArray, 0, attributeResultKeys, out string[] results);
 
-                if (results.Length > 1)
+                return result;
+
+                /*if (results.Length > 1)
                 {
                     return int.TryParse(results[1], out int parsedResult) ? parsedResult : -1;
 
@@ -820,7 +783,7 @@ namespace Apps.Devlosys.Services
                 {
                     // -911 mean no attribute foud
                     return result;
-                }
+                }*/
 
             });
 

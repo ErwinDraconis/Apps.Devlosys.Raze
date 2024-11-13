@@ -198,7 +198,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
             // Verify if iTAC attributes exist  
             var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SerialNumber);
-            if (isAttrAppended == 1)
+            if (isAttrAppended == 0)
             {
                 while (true)
                 {
@@ -289,11 +289,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 }
 
                 bool splitSuccess = await _api.SplitSnFromPanelAsync(_session.Station, snr);
-                /*if (!splitSuccess)
-                {
-                    string splitError = $"Split operation for {snr} failed!";
-                    return (false, splitError);
-                }*/
 
                 return (true, $"iTAC booking for {snr} succeeded.");
             }
@@ -310,6 +305,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             bool MES_BOOKING_RSLT = false;
             bool success = false;
             string message = string.Empty;
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
             for (int i = 0; i < 5; i++)
             {
@@ -330,6 +327,9 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 }
             }
 
+            stopwatch.Stop();
+            Log.Information($"MesBookingAsync executed in [{stopwatch.ElapsedMilliseconds}] ms");
+
             if (MES_BOOKING_RSLT)
             {
                 return (true, $"MES booking for {snr}: Succeeded");
@@ -343,8 +343,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task<(bool success, string message)> MesSavingProductAsync(string snr)
         {
-            //string lastSnr = (_session.LabelType == LabelTypeEnum.TG01) ? snr.Between("_", "_") : snr.Substring(4, 10).ToString();
-            string lastSnr = (SNR.Contains("_")) ? SNR.Between("_", "_") : SNR.Substring(4, 10).ToString();
+            string lastSnr = (snr.Contains("_")) ? snr.Between("_", "_") : snr.Substring(4, 10).ToString();
+
             var data = GetDataForLabel(lastSnr);
             if (data == null)
             {
