@@ -239,7 +239,6 @@ namespace Apps.Devlosys.Services
         }
 
 
-
         public async Task<(bool Success, string SnState, int ErrorCode)> CheckSerialNumberStateAsync(string station, string snr)
 
         {
@@ -285,9 +284,6 @@ namespace Apps.Devlosys.Services
         }
 
 
-
-
-
         public bool UploadState(string station, string snr, string[] inKeys, string[] inValues, out string[] results, out int code)
 
         {
@@ -305,7 +301,6 @@ namespace Apps.Devlosys.Services
         }
 
 
-
         public bool UploadState(string station, string snr, long bookDate, out int code)
 
         {
@@ -317,7 +312,6 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
 
         }
-
 
 
         public async Task<(bool, string[], int)> UploadStateAsync(string station, string snr, string[] inKeys, string[] inValues)
@@ -339,7 +333,6 @@ namespace Apps.Devlosys.Services
         }
 
 
-
         public async Task<(bool, int)> UploadStateAsync(string station, string snr, long bookDate)
 
         {
@@ -357,7 +350,6 @@ namespace Apps.Devlosys.Services
         }
 
 
-
         public bool GetSerialNumberInfo(string station, string snr, string[] inKeys, out string[] results, out int code)
 
         {
@@ -373,8 +365,6 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
 
         }
-
-
 
         public async Task<(bool, string[], int)> GetSerialNumberInfoAsync(string station, string snr, string[] inKeys)
 
@@ -395,7 +385,6 @@ namespace Apps.Devlosys.Services
         }
 
 
-
         public bool GetStateForProductDeclaration(string station, string snr)
 
         {
@@ -411,8 +400,6 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
 
         }
-
-
 
         public bool GetBookDateMLS(string station, string snr, out string stationNumber, out string date, out int code)
 
@@ -450,8 +437,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         public bool LockSnrItac(string station, string snr, out int code)
 
         {
@@ -471,7 +456,6 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
 
         }
-
 
 
         public bool UnlockSnrItac(string station, string snr, out int code)
@@ -494,8 +478,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         public bool LunchBooking(string station, string snr, out int code)
 
         {
@@ -513,7 +495,6 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
 
         }
-
 
 
         public async Task<List<PanelPositions>> GetPanelSNStateAsync(string station, string snr)
@@ -592,7 +573,7 @@ namespace Apps.Devlosys.Services
 
                         });
 
-                        Log.Information($"POSITION {SnStateResultValues[i]} SN {SnStateResultValues[i + 1]} STATUS {SnStateResultValues[i + 2]} ");
+                        //Log.Information($"POSITION {SnStateResultValues[i]} SN {SnStateResultValues[i + 1]} STATUS {SnStateResultValues[i + 2]} ");
 
                     }
 
@@ -1144,9 +1125,6 @@ namespace Apps.Devlosys.Services
         }
 
 
-
-
-
         public async Task<(bool Success, string Message)> UploadFileAsync(string beautyXML, string username, string password)
 
         {
@@ -1196,9 +1174,6 @@ namespace Apps.Devlosys.Services
             }
 
         }
-
-
-
 
 
         private static async Task<(bool status, string reason)> SendApiAsync(string body, string barflow)
@@ -1281,12 +1256,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
-
-
-
-
         public void UploadFileToFtp(string url, string filePath, string username, string password)
 
         {
@@ -1338,7 +1307,6 @@ namespace Apps.Devlosys.Services
             }
 
         }
-
 
 
         public async Task<(bool Success, string Message)> UploadFileToFtpAsync(string url, string filePath, string username, string password)
@@ -1394,7 +1362,6 @@ namespace Apps.Devlosys.Services
         }
 
 
-
         private void WriteToFile(string Message)
 
         {
@@ -1448,7 +1415,6 @@ namespace Apps.Devlosys.Services
             }
 
         }
-
 
 
         private static string PrettyXml(string xml)

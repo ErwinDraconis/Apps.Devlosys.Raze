@@ -130,15 +130,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             {
                 new MenuButton()
                 {
-                    Title = "DEP.",
-                    Kind = "BarcodeScan",
-                    IsEnable = true,
-                    Action = new DelegateCommand(() => {
-                        _regionManager.RequestNavigate(RegionNames.MainViewRegion,ViewNames.TraitmentView);
-                    }),
-                },
-                new MenuButton()
-                {
                     Title = "Panel Ch.",
                     Kind = "Panel",
                     IsEnable = true,
@@ -146,6 +137,17 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         _regionManager.RequestNavigate(RegionNames.MainViewRegion,ViewNames.PanelCheckView);
                     }),
                 },
+
+                new MenuButton()
+                {
+                    Title = "DEP.",
+                    Kind = "BarcodeScan",
+                    IsEnable = true,
+                    Action = new DelegateCommand(() => {
+                        _regionManager.RequestNavigate(RegionNames.MainViewRegion,ViewNames.TraitmentView);
+                    }),
+                },
+                
                 new MenuButton()
                 {
                     Title = "Orders",
@@ -225,7 +227,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         {
             SetMenuItems();
 
-            _regionManager.RequestNavigate(RegionNames.MainViewRegion, ViewNames.TraitmentView);
+            _regionManager.RequestNavigate(RegionNames.MainViewRegion, ViewNames.PanelCheckView);
         }
 
         public void OnUnloaded()

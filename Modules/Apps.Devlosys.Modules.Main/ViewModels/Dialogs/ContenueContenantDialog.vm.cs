@@ -12,7 +12,9 @@ using System;
 using System.Data;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -141,7 +143,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
 
         #region Private Methodes
 
-        private async void StartCompare()
+        /*private async void StartCompare()
         {
             try
             {
@@ -182,7 +184,72 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             SNR = string.Empty;
 
             OnFocusRequested("Galia");
+        }*/
+
+        private async Task StartCompare()
+        {
+            try
+            {
+                TaskStart = true;
+
+                await Task.Run(() => PerformGaliaComparison()).ConfigureAwait(false);
+
+                TaskStart = false;
+            }
+            catch (Exception ex)
+            {
+                TaskStart = false;
+                _ = Application.Current.Dispatcher.BeginInvoke(() =>
+                {
+                    _dialogService.ShowOkDialog( DialogsResource.GlobalErrorTitle, ex.Message,  OkDialogType.Error);
+                });
+                
+                Log.Error(ex, ex.Message);
+            }
+            finally
+            {
+                Galia = string.Empty;
+                SNR   = string.Empty;
+
+                OnFocusRequested("Galia");
+            }
         }
+
+        private void PerformGaliaComparison()
+        {
+            if (string.IsNullOrEmpty(SNR) || !SNR.Contains("_"))
+            {
+                State   = "F";
+                Message = "Invalid SNR input. Please provide the correct format.";
+                return;
+            }
+
+            string part = SNR.SafeExtractBetween("_", "_");
+
+            if (string.IsNullOrEmpty(part))
+            {
+                State   = "F";
+                Message = "Invalid SNR input. Cannot extract required part.";
+                return;
+            }
+
+            // Proceed with the comparison logic
+            string galia = Galia.TrimStart('0');
+            string galiyaFromFile = GetGaliyaFromConfig(part);
+            string galiaToCompare = galiyaFromFile.TrimStart('0');
+
+            if (galia == galiaToCompare)
+            {
+                State   = "T";
+                Message = ContenueContenantResource.GaliaOkMessage;
+            }
+            else
+            {
+                State   = "F";
+                Message = ContenueContenantResource.GaliaNotOkMessage + $". Expected [{galia}] readed from .bin file [{galiyaFromFile}]";
+            }
+        }
+
 
         public string GetGaliyaFromConfig(string snr)
         {

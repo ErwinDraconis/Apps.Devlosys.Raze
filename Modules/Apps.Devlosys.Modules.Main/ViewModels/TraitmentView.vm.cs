@@ -821,7 +821,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
             // 3: Verify if iTAC attributes exist  
             var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SNR);
-            if (isAttrAppended == 1) // Attr exist
+            if (isAttrAppended == 0) // Attr exist
             {
                 await StartBookingAsync(SNR);
                 return;
@@ -842,6 +842,13 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 if(await StartBookingAsync(SNR))
                 {
                     await _api.LockSerialAsync(_session.Station, SNR);
+                    
+                    // print label
+                    if (!StartLabling(SNR))
+                    {
+                        PrintResult(false, $"{SNR} : Faild");
+                        return;
+                    }
                 }
             }
             else

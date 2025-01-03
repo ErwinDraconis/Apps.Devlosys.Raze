@@ -16,5 +16,25 @@
                 throw ex;
             }
         }
+
+
+        public static string SafeExtractBetween(this string input, string start, string end)
+        {
+            try
+            {
+                int startIndex = input.IndexOf(start);
+                if (startIndex == -1) return null;
+
+                startIndex += start.Length; 
+                int endIndex = input.IndexOf(end, startIndex);
+                if (endIndex == -1) return null;
+
+                return input.Substring(startIndex, endIndex - startIndex);
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }

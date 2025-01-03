@@ -96,7 +96,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-
+            Log.Information($"***************** Process Booking start *********************");
             isTxtEnabled = false; isLoadingGifVisible = Visibility.Visible;
             Positions.Clear();
 
@@ -107,6 +107,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             OnFocusRequested("SNR");
 
             stopwatch.Stop();
+            Log.Information($"Process Booking and MES for a panel of {Positions.Count} position , took {stopwatch.Elapsed.TotalSeconds:F2} s");
             GlobalMessageQueue.Enqueue($"Extracted PCBs [{Positions.Count}], " +
                 $"Treatment Time: {(stopwatch.Elapsed.TotalMinutes >= 1 ? $"{stopwatch.Elapsed.TotalMinutes:F2} min" 
                 : stopwatch.Elapsed.TotalSeconds >= 1 ? $"{stopwatch.Elapsed.TotalSeconds:F2} s" 
