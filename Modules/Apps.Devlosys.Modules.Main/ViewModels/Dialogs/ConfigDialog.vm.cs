@@ -46,6 +46,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         private string _ftpUsername;
         private string _ftpPassword;
         private string _barflowServer;
+        private bool _isMESXMLActive;
 
         public override event Action<IDialogResult> RequestClose;
 
@@ -223,6 +224,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             set => SetProperty(ref _barflowServer, value, () => RaisePropertyChanged(nameof(CanSave)));
         }
 
+        public bool IsMESXMLActive
+        {
+            get => _isMESXMLActive;
+            set => SetProperty(ref _isMESXMLActive, value, () => RaisePropertyChanged(nameof(_isMESXMLActive)));
+        }
+
         /* New properties for COM */
 
         private ObservableCollection<string> _baudRates;
@@ -329,6 +336,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
 
             _session.WorkCenter = WorkCenter;
             _session.IsMESActive = IsMESActive;
+            _session.IsMESXMLActive = IsMESXMLActive;
             _session.IsItacInterlock = IsITACInterlock;
             _session.UploadType = UploadMethod;
 
@@ -373,9 +381,9 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             Ports = new ObservableCollection<string>(ports);
 
             BaudRates = new ObservableCollection<string> { "9600", "19200", "38400", "57600", "115200", "230400", "460800", "921600" };
-            StopBits = new ObservableCollection<string>  { "1", "2" };
-            Parities = new ObservableCollection<string>  { "None", "Odd", "Even" };
-            DataBits = new ObservableCollection<string>  { "7", "8" };
+            StopBits  = new ObservableCollection<string>  { "1", "2" };
+            Parities  = new ObservableCollection<string>  { "None", "Odd", "Even" };
+            DataBits  = new ObservableCollection<string>  { "7", "8" };
         }
 
         #endregion
@@ -406,6 +414,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
 
             WorkCenter = _session.WorkCenter;
             IsMESActive = _session.IsMESActive;
+            IsMESXMLActive = _session.IsMESXMLActive;
             IsITACInterlock = _session.IsItacInterlock;
             UploadMethod = _session.UploadType;
 

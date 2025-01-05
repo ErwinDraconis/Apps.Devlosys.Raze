@@ -96,7 +96,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            Log.Information($"***************** Process Booking start *********************");
             isTxtEnabled = false; isLoadingGifVisible = Visibility.Visible;
             Positions.Clear();
 
@@ -107,7 +106,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             OnFocusRequested("SNR");
 
             stopwatch.Stop();
-            Log.Information($"Process Booking and MES for a panel of {Positions.Count} position , took {stopwatch.Elapsed.TotalSeconds:F2} s");
             GlobalMessageQueue.Enqueue($"Extracted PCBs [{Positions.Count}], " +
                 $"Treatment Time: {(stopwatch.Elapsed.TotalMinutes >= 1 ? $"{stopwatch.Elapsed.TotalMinutes:F2} min" 
                 : stopwatch.Elapsed.TotalSeconds >= 1 ? $"{stopwatch.Elapsed.TotalSeconds:F2} s" 
@@ -156,7 +154,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                     {
 #if RELEASE
-                        Log.Information($"ProcessBooking for SN {position.SerialNumber} which has a result of {position.Status}");
                         await ProcessBookingAsync(position.SerialNumber);
 #endif
                     }
@@ -174,7 +171,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             isLoadingGifVisible = Visibility.Collapsed;
             foreach (var position in panelsResult)
             {
-                Log.Information($"{position.SerialNumber} - {position.PositionNumber} - {position.Status}");
                 if (position.Status != (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                 {
                     iTAC_Check_SN_RSLT_ENUM status = Enum.IsDefined(typeof(iTAC_Check_SN_RSLT_ENUM), position.Status)
@@ -304,7 +300,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         private async Task<(bool success, string message)> MesBookingAsync(string snr)
         {
             bool MES_BOOKING_RSLT = false;
-            bool success = false;
+            bool success   = false;
             string message = string.Empty;
 
             Stopwatch stopwatch = Stopwatch.StartNew();
@@ -314,6 +310,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 (success, message) = await MesSavingProductAsync(snr);
                 if (success)
                 {
+                    if(message.Contains("No MES "))
+                    {
+                        MES_BOOKING_RSLT = true;
+                        break;
+                    }
+
                     await _api.SetUserWhoManAsync(_session.Station, snr, _session.UserName);
 
                     await _api.AppendMESAttrAsync(_session.Station, snr);
@@ -329,7 +331,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
 
             stopwatch.Stop();
-            Log.Information($"MesBookingAsync executed in [{stopwatch.ElapsedMilliseconds}] ms");
 
             if (MES_BOOKING_RSLT)
             {
@@ -352,10 +353,21 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return (false, $"Label data not available for SN {lastSnr}");
             }
 
-            string reference = Regex.Replace(data.FinGood, "^0*", "");
+            
+            if (data.Shipping.ToUpper() != "Y")
+            {
+                return (true, $"No MES for SN {lastSnr} is needed, data in File [{data.Shipping.ToUpper()}]");
+            }
 
+            if (!_session.IsMESActive)
+            {
+                _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, TraitmentResource.MESDisableMessage, OkDialogType.Warning);
+                return (false, " MES is inactive"); 
+            }
+            
             string date = DateTime.Now.ToString(_session.DateFormat, CultureInfo.InvariantCulture);
             string workcenter = _session.WorkCenter;
+            string reference = Regex.Replace(data.FinGood, "^0*", "");
 
             return await _api.StartMESAsync(workcenter, reference, date, snr, "1", "10", _session);
 

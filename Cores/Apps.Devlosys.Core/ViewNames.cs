@@ -12,5 +12,6 @@
 
         public const string BinView = "BinView";
         public const string PanelCheckView = "PanelCheckView";
+        public const string ContenueContenant = "ContenueContenant";
     }
 }

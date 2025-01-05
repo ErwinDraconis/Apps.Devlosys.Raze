@@ -271,10 +271,18 @@
                                 </StackPanel>
 
                                 <StackPanel Margin="0 6">
-                                    <StackPanel Margin="0 6" Orientation="Horizontal">
-                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 5 0" IsChecked="{Binding IsMESActive}" />
-                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.MESActivationText}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <StackPanel Margin="0 6" Orientation="Horizontal">
+                                            <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 5 0" IsChecked="{Binding IsMESActive}" />
+                                            <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.MESActivationText}" />
+                                        </StackPanel>
+
+                                        <StackPanel Margin="20 6 0 0" Orientation="Horizontal">
+                                            <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 5 0" IsChecked="{Binding IsMESXMLActive}" />
+                                            <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="MES XML Generation" />
+                                        </StackPanel>
                                     </StackPanel>
+                                    
 
                                     <StackPanel Margin="0 6" Orientation="Horizontal">
                                         <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 5 0" IsChecked="{Binding IsITACInterlock}" />

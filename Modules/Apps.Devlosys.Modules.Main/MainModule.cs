@@ -23,7 +23,8 @@ namespace Apps.Devlosys.Modules.Main
             containerRegistry.RegisterForNavigation<MainView>();
             containerRegistry.RegisterForNavigation<TraitmentView>();
             containerRegistry.RegisterForNavigation<BinView>();
-            containerRegistry.RegisterForNavigation<PanelCheckView>();
+            containerRegistry.RegisterForNavigation<PanelCheckView>(); 
+            containerRegistry.RegisterForNavigation<ContenueContenant>();
 
             //_regionManager.RegisterViewWithRegion<TraitmentView>(RegionNames.MainViewRegion);
 

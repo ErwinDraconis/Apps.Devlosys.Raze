@@ -22,6 +22,7 @@ namespace Apps.Devlosys.Infrastructure.Models
         private const string PRINT_MANUELLE_LABEL_NAME = "MLSL";
         private const string WORK_CENTER_NAME = "WorkCenter";
         private const string MES_ACTIVE_NAME = "MES";
+        private const string MES_XML_GEN = "MES_XML_GEN";
         private const string ITAC_INTERLOCK_NAME = "itacInterlock";
         private const string UPLOAD_TYPE_NAME = "uptype";
         private const string FTP_USERNAME_NAME = "ftpCredentialUsername";
@@ -139,6 +140,13 @@ namespace Apps.Devlosys.Infrastructure.Models
             get => configuration.AppSettings.Settings[MES_ACTIVE_NAME].Value.ToUpper() == "ON";
             set => configuration.AppSettings.Settings[MES_ACTIVE_NAME].Value = value ? "ON" : "OFF";
         }
+
+        public bool IsMESXMLActive
+        {
+            get => configuration.AppSettings.Settings[MES_XML_GEN].Value.ToUpper() == "ON";
+            set => configuration.AppSettings.Settings[MES_XML_GEN].Value = value ? "ON" : "OFF";
+        }
+        
 
         public bool IsItacInterlock
         {

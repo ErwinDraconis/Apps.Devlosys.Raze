@@ -23,7 +23,7 @@ using System.Linq;
 using System.Net;
 
 using System.Text;
-
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using System.Windows;
@@ -705,6 +705,13 @@ namespace Apps.Devlosys.Services
                     if (apiResponse.status == false)
                     {
                         Log.Error("API call failed : " + apiResponse.reason);
+
+                        // Save XML to file
+                        if (_session.IsMESXMLActive)
+                        {
+                            await SaveXmlToFileAsync(prettyXML, productNumber, serialNumber);
+                        }
+
                         return (false, apiResponse.reason);
                     }
                     else
@@ -721,6 +728,43 @@ namespace Apps.Devlosys.Services
             catch (Exception ex)
             {
                 return (false, $"Error in StartMES: {ex.Message}");
+            }
+        }
+
+        private async Task SaveXmlToFileAsync(string xmlContent, string productNumber, string serialNumber)
+        {
+            try
+            {
+                // Sanitize inputs to remove special characters
+                string SanitizeInput(string input)
+                {
+                    return Regex.Replace(input, @"[^a-zA-Z0-9_]", "_");
+                }
+
+                productNumber = SanitizeInput(productNumber);
+                serialNumber = SanitizeInput(serialNumber);
+                
+                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                string errorDirectory = Path.Combine(baseDirectory, "MesXmlError");
+
+                if (!Directory.Exists(errorDirectory))
+                {
+                    Directory.CreateDirectory(errorDirectory);
+                }
+
+                // Format the file name with sanitized inputs and current date/time
+                string sanitizedDateTime = DateTime.Now.ToString("yyyyMMddHHmm");
+                string fileName = $"{productNumber}_{serialNumber}_{sanitizedDateTime}.xml";
+                string filePath = Path.Combine(errorDirectory, fileName);
+
+                using (var writer = new StreamWriter(filePath, false)) 
+                {
+                    await writer.WriteAsync(xmlContent);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"MES failed for SN {serialNumber}, Failed to save XML to file: {ex.Message}");
             }
         }
 

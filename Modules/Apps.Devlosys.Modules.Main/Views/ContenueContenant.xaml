@@ -1,0 +1,244 @@
+﻿<UserControl x:Class="Apps.Devlosys.Modules.Main.Views.ContenueContenant"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:enums="clr-namespace:Apps.Devlosys.Infrastructure;assembly=Apps.Devlosys.Infrastructure"
+             xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
+             xmlns:ctrl="clr-namespace:Apps.Devlosys.Controls.Converters;assembly=Apps.Devlosys.Controls"
+             xmlns:wpfAnimatedGif="http://wpfanimatedgif.codeplex.com"
+             xmlns:wpf="http://devlosys.com/winfx/xaml/themes"
+              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:Apps.Devlosys.Controls.Converters;assembly=Apps.Devlosys.Controls"
+             x:Name="_window">
+
+    <UserControl.Resources>
+        <local:StatusToColorConverter x:Key="StatusToColorConverter"/>
+        <local:StatusToStringConverter x:Key="StatusToStringConverter"/>
+        <local:BoolToGaliaTextConverter x:Key="BoolToGaliaTextConverter" />
+        
+        <DataTemplate x:Key="OffContentTemplate">
+            <TextBlock Text="{Binding ContainerName, StringFormat='Enabled {0}'}" />
+        </DataTemplate>
+        <DataTemplate x:Key="OnContentTemplate">
+            <TextBlock Text="{Binding ContainerName, StringFormat='Disabled {0}'}" />
+        </DataTemplate>
+        
+    </UserControl.Resources>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+
+        <Grid Background="#F0F0F0">
+
+            <Grid>
+                <wpf:Card Margin="5">
+                    <Grid Background="White">
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="5*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header Section -->
+                        <Border Grid.Row="0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="WhiteSmoke" Offset="0.0"/>
+                                    <GradientStop Color="White" Offset="1.0"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="Contenue-Contenant (NEW)" Foreground="GreenYellow" FontSize="22" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                        </Border>
+                        
+                        <!-- Inputs from user -->
+                        <Grid Grid.Row="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- ToggleButton with dynamic content -->
+                                <ToggleButton x:Name="GaliaToggleButton" 
+                                              IsChecked="{Binding IsPrintManuelleLabel}" />
+                                <TextBlock Text="{Binding IsPrintManuelleLabel, Converter={StaticResource BoolToGaliaTextConverter}}"  
+                                           Margin="2,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <TextBox Grid.Row="0" Grid.Column="1"
+                                     x:Name="SNRGalia"
+                                     Margin="10,2,0,2"
+                                     IsEnabled="{Binding isGaliaTxtEnabled}"
+                                     Text="{Binding SNRGalia, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="18" 
+                                     FontWeight="Medium"
+                                     Padding="{StaticResource TextBoxStyle.Padding}"
+                                     Width="900"
+                                     materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                     materialDesign:HintAssist.Hint="Scan Galia Datamatrix">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Background">
+                                            <Setter.Value>
+                                                <SolidColorBrush Color="White" />
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsGaliaDataValid}" Value="False">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard RepeatBehavior="3x">
+                                                            <ColorAnimation Storyboard.TargetProperty="(Background).(SolidColorBrush.Color)"
+                                                                            To="Red"
+                                                                            Duration="0:0:0.5"
+                                                                            AutoReverse="True" />
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                            </DataTrigger>
+
+                                            <!-- Reset to white when valid -->
+                                            <DataTrigger Binding="{Binding IsGaliaDataValid}" Value="True">
+                                                <Setter Property="Background" Value="White" />
+                                            </DataTrigger>
+                                            
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+
+
+                            <TextBox Grid.Row="1" Grid.Column="1" 
+                                     x:Name="SNR"
+                                     Margin="10,2,0,2"
+                                     IsEnabled="{Binding isSNTxtEnabled}"
+                                     Text="{Binding SNR, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="18" 
+                                     FontWeight="Medium"
+                                     Padding="{StaticResource TextBoxStyle.Padding}"
+                                     Width="900"
+                                     materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                     materialDesign:HintAssist.Hint="Scan a serial number to proceed" >
+                                <TextBox.InputBindings>
+                                    <KeyBinding Gesture="Enter" 
+                                             Command="{Binding OnSNTxtKeyDown}" />
+                                </TextBox.InputBindings>
+
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Background">
+                                            <Setter.Value>
+                                                <SolidColorBrush Color="White" />
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsScannedSNValid}" Value="False">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard RepeatBehavior="3x">
+                                                            <ColorAnimation Storyboard.TargetProperty="(Background).(SolidColorBrush.Color)"
+                                                                            To="Red"
+                                                                            Duration="0:0:0.5"
+                                                                            AutoReverse="True" />
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                            </DataTrigger>
+
+                                            <!-- Reset to white when valid -->
+                                            <DataTrigger Binding="{Binding IsScannedSNValid}" Value="True">
+                                                <Setter Property="Background" Value="White" />
+                                            </DataTrigger>
+                                            
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+
+                            </TextBox>
+                        </Grid>
+
+
+                        <!-- Result 1 -->
+                        <Grid Grid.Row="2" Visibility="{Binding Rslt_1_Visibility}" Margin="5">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Galia Number : "></TextBlock>
+                                <TextBlock Text="{Binding GaliaNumber}" FontWeight="Bold"></TextBlock>
+
+                                <TextBlock Text="   Galia Part Number : "></TextBlock>
+                                <TextBlock Text="{Binding GaliaPN}" FontWeight="Bold"></TextBlock>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Result for each SN -->
+                        <Grid Grid.Row="3" Visibility="{Binding Rslt_1_Visibility}" Margin="5">
+                            <ItemsControl ItemsSource="{Binding ResultList}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <!-- Define a UniformGrid with 4 columns -->
+                                        <UniformGrid Columns="4"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+
+                                <!-- Define the template for each item in the collection -->
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}" Margin="5">
+                                            <Grid>
+                                                <!-- Define RowDefinitions and ColumnDefinitions -->
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Row 1: Galia Number -->
+                                                <TextBlock Text="GaliaNb:" FontSize="14" FontWeight="Medium"  Grid.Row="0" Grid.Column="0"
+                                                            HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5"/>
+                                                <TextBlock Text="{Binding GaliaNb}" FontSize="14" FontWeight="Bold" 
+                                                           HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="0" Grid.Column="1" Margin="5"/>
+
+                                                <!-- Row 2: Galia Part Number -->
+                                                <TextBlock Text="GaliaPN:" FontSize="14" FontWeight="Medium"  Grid.Row="1" Grid.Column="0"
+                                                          HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5"/>
+                                                <TextBlock Text="{Binding GaliaPN}" FontSize="14" FontWeight="Bold" 
+                                                            HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Margin="5"/>
+
+                                                <!-- Row 3: PCB Serial Number -->
+                                                <TextBlock Text="PCBSN:" FontSize="14" FontWeight="Medium"  Grid.Row="2" Grid.Column="0"
+                                                            HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5"/>
+                                                <TextBlock Text="{Binding PCBSN}" FontSize="14" FontWeight="Bold" 
+                                                            HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Row="2" Grid.Column="1" Margin="5"/>
+
+                                                <!-- Row 4: PCB Part Number -->
+                                                <TextBlock Text="PCBPN:" FontSize="14" FontWeight="Medium"  Grid.Row="3" Grid.Column="0"
+                                                            HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5"/>
+                                                <TextBlock Text="{Binding PCBPN}" FontSize="14" FontWeight="Bold" 
+                                                            HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Row="3" Grid.Column="1" Margin="5"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+
+
+
+
+                    </Grid>
+                </wpf:Card>
+            </Grid>
+
+        </Grid>
+
+    </ScrollViewer>
+
+</UserControl>

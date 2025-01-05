@@ -170,9 +170,9 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                          _eventAggregator.GetEvent<ConfigChangedEvent>().Publish();
                      }),
                 },
-                new MenuButton()
+                 new MenuButton()
                 {
-                     Title = "CC",
+                     Title = "CC-Classic",
                      Kind = "PackageVariant",
                      IsEnable = true,
                      Action = new DelegateCommand(() => {
@@ -181,17 +181,15 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                          _eventAggregator.GetEvent<ConfigChangedEvent>().Publish();
                      }),
                 },
-                //new MenuButton()
-                //{
-                //     Title = "Booking",
-                //     Kind = "Cog",
-                //     IsEnable = _session.Level == 1,
-                //     Action = new DelegateCommand(() => {
-                //         _dialogService.ShowDialog(DialogNames.BookingDialog, null, () =>{ });
-
-                //         _eventAggregator.GetEvent<ConfigChangedEvent>().Publish();
-                //     }),
-                //},
+                new MenuButton()
+                {
+                     Title = "CC (New)",
+                     Kind = "PackageVariant",
+                     IsEnable = true,
+                      Action = new DelegateCommand(() => {
+                        _regionManager.RequestNavigate(RegionNames.MainViewRegion,ViewNames.ContenueContenant);
+                    }),
+                },
                 new MenuButton()
                 {
                      Title = "Settings",
