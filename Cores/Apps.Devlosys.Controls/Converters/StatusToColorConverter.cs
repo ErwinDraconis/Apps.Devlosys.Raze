@@ -9,16 +9,16 @@ namespace Apps.Devlosys.Controls.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if ((int)value == 0)
-                return Brushes.Green;
-            else if ((int)value == 1) // Part is fail
-                return Brushes.OrangeRed;
-            else if((int)value == 2) // Part is scrap
-                return Brushes.DarkRed;
-            else if ((int)value == 10) // Part failed during iTAC or MES booking
-                return Brushes.Azure;
-            else
-                return Brushes.Yellow;
+            var status = (int)value;
+            return status switch
+            {
+                0  => Brushes.Green,     // OK
+                1  => Brushes.OrangeRed, // NOK
+                2  => Brushes.DarkRed,   // Scrap
+                3  => Brushes.Gray,      // Initial state, pending test
+                10 => Brushes.Azure,     // Booking failed
+                _  => Brushes.Yellow     // Unknown
+            };
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

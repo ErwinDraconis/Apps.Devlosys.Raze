@@ -827,19 +827,19 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return;
             }
 
-            // 3.2 - Attribute does not exist, append attributes and perform MES and iTAC booking
-            var appendMesAttrRslt  = await _api.SetUserWhoManAsync(_session.Station, SNR, _session.UserName);
-            appendMesAttrRslt     |= await _api.AppendMESAttrAsync(_session.Station, SNR);
-            if (appendMesAttrRslt != 0)
-            {
-                //PrintResult(false, $"MES Attributes not added correctly for SN {SNR} : Please re-try again");
-                //return;
-            }
-
             // Set up for retry logic for MES booking  
             if (await AttemptMesBookingAsync(SNR))
             {
-                if(await StartBookingAsync(SNR))
+                // Append attr only after MES booking is Ok
+                var data = GetDataForLabel(SNR);
+                if (data != null && data.Shipping.ToUpper() == "Y" && _session.IsMESActive)
+                {
+                    await _api.SetUserWhoManAsync(_session.Station, SNR, _session.UserName);
+                    await _api.AppendMESAttrAsync(_session.Station, SNR);
+                }
+
+                // perform iTAC booking
+                if (await StartBookingAsync(SNR))
                 {
                     await _api.LockSerialAsync(_session.Station, SNR);
                     

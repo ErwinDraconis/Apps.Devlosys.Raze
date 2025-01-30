@@ -68,7 +68,7 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}" Margin="5">
+                                        <Border Background="{Binding DisplayStatus, Converter={StaticResource StatusToColorConverter}}" Margin="5">
                                             <Grid>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto"/>
@@ -80,7 +80,7 @@
                                                        HorizontalAlignment="Left"  VerticalAlignment="Top" 
                                                        Margin="5"/>
 
-                                                <TextBlock Text="{Binding Status, Converter={StaticResource StatusToStringConverter}}" FontSize="14" FontWeight="Bold" 
+                                                <TextBlock Text="{Binding DisplayStatus, Converter={StaticResource StatusToStringConverter}}" FontSize="14" FontWeight="Bold" 
                                                        HorizontalAlignment="Center" VerticalAlignment="Center"  Grid.Row="1" 
                                                        Margin="5"/>
 

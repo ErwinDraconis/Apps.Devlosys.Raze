@@ -263,6 +263,8 @@ namespace Apps.Devlosys.Infrastructure
         PART_OK    = 0,
         PART_FAIL  = 1,
         PART_SCRAP = 2,
+        PART_PENDING = 3,
+        BOOKING_OP_FAILED = 10,
         PART_Unknown = -1,
     }
 

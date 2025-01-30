@@ -16,6 +16,7 @@ namespace Apps.Devlosys.Controls.Converters
                     0 => "Ok",
                     1 => "Fail",
                     2 => "Scrap",
+                    3 => "Pending judgment",
                     10 => "iTAC or MES Failed",
                     _ => "Unknown"
                 };

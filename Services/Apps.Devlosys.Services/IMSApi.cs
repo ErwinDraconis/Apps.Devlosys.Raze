@@ -1,4 +1,5 @@
-﻿using Apps.Devlosys.Infrastructure.Models;
+﻿using Apps.Devlosys.Infrastructure;
+using Apps.Devlosys.Infrastructure.Models;
 
 using Apps.Devlosys.Services.Interfaces;
 
@@ -498,19 +499,12 @@ namespace Apps.Devlosys.Services
 
 
         public async Task<List<PanelPositions>> GetPanelSNStateAsync(string station, string snr)
-
         {
-
             List<PanelPositions> panelRslt = new List<PanelPositions>();
 
-
-
 #if DEBUG
-
             var fictiveNumberOfBoards = new Random().Next(5, 16);
-
             Random random = new Random();
-
             for (int i = 0; i < fictiveNumberOfBoards; i++)
             {
                 panelRslt.Add(new PanelPositions
@@ -519,9 +513,10 @@ namespace Apps.Devlosys.Services
 
                     PositionNumber = i + 1,
 
-                    SerialNumber = "99999_99999_99999",
+                    SerialNumber = "99999_99999_99999" + random.Next(0, 1000).ToString(),
 
                     Status = random.Next(0, 4),
+                    DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.PART_PENDING,
 
                 });
                 await Task.Delay(100);
@@ -530,60 +525,39 @@ namespace Apps.Devlosys.Services
             return panelRslt;
 
 #endif
-
-            int processLayer = 2;
-
-            int checkMultiBoard = 1;
-
+            int processLayer       = 2;
+            int checkMultiBoard    = 1;
             string serialNumberPos = "-1";
-
             string[] SnStateResultKeys = new[] { "SERIAL_NUMBER_POS", "SERIAL_NUMBER", "SERIAL_NUMBER_STATE" };
-
             string[] SnStateResultValues;
 
-
-
             await Task.Run(() =>
-
             {
-
                 int result = imsapi.trCheckSerialNumberState(sessionContext, station, processLayer, checkMultiBoard, snr, serialNumberPos,
-
-                                                                         SnStateResultKeys, out SnStateResultValues);
-
-
+                                                                             SnStateResultKeys, out SnStateResultValues);
 
                 if (!string.IsNullOrEmpty(SnStateResultValues[0]) && SnStateResultValues.Length > 0)
-
                 {
-
                     for (int i = 0; i < SnStateResultValues.Length; i += SnStateResultKeys.Length)
-
                     {
-
-                        panelRslt.Add(new PanelPositions
-
+                        try
                         {
-
-                            PositionNumber = int.Parse(SnStateResultValues[i]),
-
-                            SerialNumber = SnStateResultValues[i + 1],
-
-                            Status = int.Parse(SnStateResultValues[i + 2]),
-
-                        });
-
-                        //Log.Information($"POSITION {SnStateResultValues[i]} SN {SnStateResultValues[i + 1]} STATUS {SnStateResultValues[i + 2]} ");
-
+                            panelRslt.Add(new PanelPositions
+                            {
+                                PositionNumber = int.Parse(SnStateResultValues[i]),
+                                SerialNumber   = SnStateResultValues[i + 1],
+                                Status = int.Parse(SnStateResultValues[i + 2]),
+                                DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.PART_PENDING,
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error($"Error processing SN {SnStateResultValues[i + 1]}, item at index {i}, Function {nameof(GetPanelSNStateAsync)} , error: {ex.Message}");
+                            continue; 
+                        }
                     }
-
                 }
-
             });
-
-
-
-
 
             return panelRslt;
 
@@ -706,7 +680,7 @@ namespace Apps.Devlosys.Services
                     {
                         Log.Error("API call failed : " + apiResponse.reason);
 
-                        // Save XML to file
+                        // Save XML to file only if MES has failed
                         if (_session.IsMESXMLActive)
                         {
                             await SaveXmlToFileAsync(prettyXML, productNumber, serialNumber);
@@ -717,7 +691,7 @@ namespace Apps.Devlosys.Services
                     else
                     {
                         Log.Information("API call Ok : " + apiResponse.status);
-                        return (true, null);
+                        return (true, "PASS");
                     }
                 }
                 else
@@ -733,18 +707,26 @@ namespace Apps.Devlosys.Services
 
         private async Task SaveXmlToFileAsync(string xmlContent, string productNumber, string serialNumber)
         {
+            Log.Information($"Saving MES xml file after MES booking has failed for SN {serialNumber}, has started.");
+
+            if (string.IsNullOrWhiteSpace(xmlContent))
+            {
+                Log.Warning("XML content is empty; skipping file save.");
+                return;
+            }
+
             try
             {
-                // Sanitize inputs to remove special characters
+                // Remove special characters
                 string SanitizeInput(string input)
                 {
                     return Regex.Replace(input, @"[^a-zA-Z0-9_]", "_");
                 }
 
                 productNumber = SanitizeInput(productNumber);
-                serialNumber = SanitizeInput(serialNumber);
-                
-                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                serialNumber  = SanitizeInput(serialNumber);
+
+                string baseDirectory  = AppDomain.CurrentDomain.BaseDirectory;
                 string errorDirectory = Path.Combine(baseDirectory, "MesXmlError");
 
                 if (!Directory.Exists(errorDirectory))
@@ -753,20 +735,31 @@ namespace Apps.Devlosys.Services
                 }
 
                 // Format the file name with sanitized inputs and current date/time
-                string sanitizedDateTime = DateTime.Now.ToString("yyyyMMddHHmm");
-                string fileName = $"{productNumber}_{serialNumber}_{sanitizedDateTime}.xml";
+                string sanitizedDateTime = DateTime.Now.ToString("ddHHmmss");
+                string fileName = $"{serialNumber}_{sanitizedDateTime}.xml";
                 string filePath = Path.Combine(errorDirectory, fileName);
 
-                using (var writer = new StreamWriter(filePath, false)) 
+                // Ensure the file path is valid
+                if (filePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+                {
+                    Log.Error($"Invalid file path: {filePath}");
+                    return;
+                }
+
+                using (var writer = new StreamWriter(filePath, false))
                 {
                     await writer.WriteAsync(xmlContent);
+                    await writer.FlushAsync();
                 }
+
+                Log.Information("XML file generated and saved successfully.");
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"MES failed for SN {serialNumber}, Failed to save XML to file: {ex.Message}");
+                Log.Error($"MES failed for SN {serialNumber}, Failed to save XML to file: {ex.Message}");
             }
         }
+
 
         public int VerifyMESAttr(string station, string serialNumber)
 

@@ -7,6 +7,7 @@ namespace Apps.Devlosys.Infrastructure.Models
         private int    _positionNumber;
         private string _serialNumber;
         private int    _status;
+        private int    _displayStatus;
 
         public int PositionNumber
         {
@@ -47,6 +48,18 @@ namespace Apps.Devlosys.Infrastructure.Models
             }
         }
 
+        public int DisplayStatus
+        {
+            get => _displayStatus;
+            set
+            {
+                if (_displayStatus != value)
+                {
+                    _displayStatus = value;
+                    OnPropertyChanged(nameof(DisplayStatus));
+                }
+            }
+        }
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged(string propertyName)
