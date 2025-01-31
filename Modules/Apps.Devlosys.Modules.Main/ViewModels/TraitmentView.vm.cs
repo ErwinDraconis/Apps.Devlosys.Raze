@@ -805,7 +805,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             // 1: Check if booking is for Board only (board in panel not allowed) 
             var panelResult = await _api.GetPanelSNStateAsync(_session.Station, SNR);
 
-            if (panelResult != null && panelResult.Count > 1)
+            if (panelResult != null && panelResult.Count > 1 && !_session.IsPANELBookingAllowedInPCBView)
             {
                 ShowErrorDialog("Panel Booking is not allowed in this menu, Please scan SN of a PCB only.");
                 return;
@@ -827,12 +827,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return;
             }
 
-            // Set up for retry logic for MES booking  
+            // 4: Set up for retry logic for MES booking 
             if (await AttemptMesBookingAsync(SNR))
             {
                 // Append attr only after MES booking is Ok
                 var data = GetDataForLabel(SNR);
-                if (data != null && data.Shipping.ToUpper() == "Y" && _session.IsMESActive)
+                if (data?.Shipping?.ToUpper() == "Y" && _session.IsMESActive)
                 {
                     await _api.SetUserWhoManAsync(_session.Station, SNR, _session.UserName);
                     await _api.AppendMESAttrAsync(_session.Station, SNR);

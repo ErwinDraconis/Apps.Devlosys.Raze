@@ -189,7 +189,7 @@
                                 <Grid Margin="0 6">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition />
-                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition  />
                                         <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
 
@@ -198,9 +198,14 @@
                                         <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.ITACFVTInterlockText}" />
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 10 0" IsChecked="{Binding IsPrintManuelleLabel}" />
                                         <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="{x:Static resx:ConfigResource.PrintManuelleLabelText}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" Margin="0 1 5 0" IsChecked="{Binding IsPANELBookingAllowedInPCBView}" />
+                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="Allow Panel Booking.." ToolTip="Allow Panel Booking in PCB View (Traitement)" />
                                     </StackPanel>
                                 </Grid>
 

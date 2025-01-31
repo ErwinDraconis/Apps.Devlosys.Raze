@@ -170,7 +170,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                          _eventAggregator.GetEvent<ConfigChangedEvent>().Publish();
                      }),
                 },
-                 new MenuButton()
+                /* new MenuButton()
                 {
                      Title = "CC-Classic",
                      Kind = "PackageVariant",
@@ -180,7 +180,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
                          _eventAggregator.GetEvent<ConfigChangedEvent>().Publish();
                      }),
-                },
+                },*/
                 new MenuButton()
                 {
                      Title = "CC (New)",

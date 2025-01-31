@@ -37,6 +37,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         private bool _isQualityValidation;
         private bool _isFVTInterlock;
         private bool _isPrintManuelleLabel;
+        private bool _isPANELBookingAllowedInPCBView;
         private string _bin;
         private string _leakHour;
         private string _workCenter;
@@ -169,6 +170,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         {
             get => _isPrintManuelleLabel;
             set => SetProperty(ref _isPrintManuelleLabel, value, () => RaisePropertyChanged(nameof(CanSave)));
+        }
+
+        public bool IsPANELBookingAllowedInPCBView
+        {
+            get => _isPANELBookingAllowedInPCBView;
+            set => SetProperty(ref _isPANELBookingAllowedInPCBView, value);
         }
 
         public string Bin
@@ -330,6 +337,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             _session.IsQualityValidation = IsQualityValidation;
             _session.IsFVTInterlock = IsFVTInterlock;
             _session.IsPrintManuelleLabel = IsPrintManuelleLabel;
+            _session.IsPANELBookingAllowedInPCBView = IsPANELBookingAllowedInPCBView;
 
             _session.BIN = Bin;
             _session.LeakHours = LeakHours;
@@ -408,7 +416,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             IsQualityValidation = _session.IsQualityValidation;
             IsFVTInterlock = _session.IsFVTInterlock;
             IsPrintManuelleLabel = _session.IsPrintManuelleLabel;
-
+            IsPANELBookingAllowedInPCBView = _session.IsPANELBookingAllowedInPCBView;
+            
             Bin = _session.BIN;
             LeakHours = _session.LeakHours;
 

@@ -20,6 +20,7 @@ namespace Apps.Devlosys.Infrastructure.Models
         private const string QUALITY_VALIDATION_NAME = "QLV";
         private const string FVT_INTERLOCK_NAME = "FLI";
         private const string PRINT_MANUELLE_LABEL_NAME = "MLSL";
+        private const string ALLOW_PANEL_BOOKING_ON_PCB_VIEW = "APBOPV";
         private const string WORK_CENTER_NAME = "WorkCenter";
         private const string MES_ACTIVE_NAME = "MES";
         private const string MES_XML_GEN = "MES_XML_GEN";
@@ -127,6 +128,12 @@ namespace Apps.Devlosys.Infrastructure.Models
         {
             get => configuration.AppSettings.Settings[PRINT_MANUELLE_LABEL_NAME].Value.ToUpper() == "T";
             set => configuration.AppSettings.Settings[PRINT_MANUELLE_LABEL_NAME].Value = value ? "T" : "F";
+        }
+
+        public bool IsPANELBookingAllowedInPCBView
+        {
+            get => configuration.AppSettings.Settings[ALLOW_PANEL_BOOKING_ON_PCB_VIEW].Value.ToUpper() == "T";
+            set => configuration.AppSettings.Settings[ALLOW_PANEL_BOOKING_ON_PCB_VIEW].Value = value ? "T" : "F";
         }
 
         public string WorkCenter
