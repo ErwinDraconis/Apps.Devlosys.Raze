@@ -11,19 +11,15 @@ using Prism.Ioc;
 using Prism.Services.Dialogs;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Markup;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 
 namespace Apps.Devlosys.Modules.Main.ViewModels
@@ -187,94 +183,118 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         }
 
 
-    private async Task ProcessBookingAsync(string SerialNumber)
-    {
-
-        bool loop = false;
-
-        // Verify if iTAC attributes exist  
-        var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SerialNumber);
-        if (isAttrAppended == 0)
+        private async Task ProcessBookingAsync(string SerialNumber)
         {
-            while (true)
+            Log.Information($"[START] ProcessBookingAsync: Processing SN [{SerialNumber}] at station [{_session.Station}].");
+
+            bool loop = false;
+            int retryCount = 0;
+
+            // Verify if iTAC attributes exist  
+            var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SerialNumber);
+            if (isAttrAppended == 0)
             {
-                var (success, message) = await StartiTACBookingAsync(SerialNumber);
+                Log.Information($"[CHECK] MES attributes already exist for SN [{SerialNumber}]. Only iTAC booking required.");
 
-                if (success)
-                {
-                    Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.PART_OK;
-                    return;
-                }
-                else
-                {
-                     _dialogService.ShowConfirmation("Re-try iTAC booking",
-                        $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
-                        OnConfirm: () => { loop = true; },
-                        OnCancel: () =>
-                        {
-                            // Change color on the display to show that this board has failed in iTAC or MES booking
-                            Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.BOOKING_OP_FAILED;
-                            loop = false; return;
-                        }
-                    );
-                    if (!loop) break;
-
-                }
-            }
-            return;
-        }
-
-        // Set up for retry logic for MES booking  
-        while (true)
-        {
-            var (success, message) = await MesBookingAsync(SerialNumber);
-
-            if (success)
-            {
                 while (true)
                 {
-                    (success, message) = await StartiTACBookingAsync(SerialNumber);
+                    retryCount++;
+                    Log.Information($"[RETRY #{retryCount}] Attempting iTAC booking for SN [{SerialNumber}] at station [{_session.Station}].");
+
+                    var (success, message) = await StartiTACBookingAsync(SerialNumber);
+
                     if (success)
                     {
-                        await _api.LockSerialAsync(_session.Station, SerialNumber);
+                        Log.Information($"[SUCCESS] iTAC booking for SN [{SerialNumber}] completed successfully.");
                         Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.PART_OK;
                         return;
                     }
                     else
                     {
+                        Log.Error($"[ERROR] iTAC booking for SN [{SerialNumber}] failed (Attempt #{retryCount}). Reason: {message}");
+
                         _dialogService.ShowConfirmation("Re-try iTAC booking",
-                        $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
+                            $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
                             OnConfirm: () => { loop = true; },
                             OnCancel: () =>
                             {
                                 Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.BOOKING_OP_FAILED;
-                                loop = false; return;
+                                loop = false;
                             }
                         );
                         if (!loop) break;
                     }
                 }
-                break;
+                Log.Warning($"[EXIT] iTAC booking for SN [{SerialNumber}] was not completed after {retryCount} attempts.");
+                return;
             }
-            else
+
+            // Set up retry logic for MES booking  
+            retryCount = 0;
+            while (true)
             {
-                _dialogService.ShowConfirmation("Re-try MES booking",
+                retryCount++;
+                Log.Information($"[RETRY #{retryCount}] Attempting MES booking for SN [{SerialNumber}] at station [{_session.Station}].");
+
+                var (success, message) = await MesBookingAsync(SerialNumber);
+
+                if (success)
+                {
+                    Log.Information($"[SUCCESS] MES booking for SN [{SerialNumber}] succeeded. Proceeding with iTAC booking.");
+
+                    retryCount = 0;
+                    while (true)
+                    {
+                        retryCount++;
+                        Log.Information($"[RETRY #{retryCount}] Attempting iTAC booking for SN [{SerialNumber}] after MES success.");
+
+                        (success, message) = await StartiTACBookingAsync(SerialNumber);
+                        if (success)
+                        {
+                            Log.Information($"[SUCCESS] iTAC booking for SN [{SerialNumber}] succeeded after MES.");
+                            await _api.LockSerialAsync(_session.Station, SerialNumber);
+                            Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.PART_OK;
+
+                            return;
+                        }
+                        else
+                        {
+                            Log.Error($"[ERROR] iTAC booking for SN [{SerialNumber}] failed (Attempt #{retryCount}). Reason: {message}");
+
+                            _dialogService.ShowConfirmation("Re-try iTAC booking",
+                                $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
+                                OnConfirm: () => { loop = true; },
+                                OnCancel: () =>
+                                {
+                                    Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.BOOKING_OP_FAILED;
+                                    loop = false;
+                                }
+                            );
+                            if (!loop) break;
+                        }
+                    }
+                    break;
+                }
+                else
+                {
+                    Log.Error($"[ERROR] MES booking for SN [{SerialNumber}] failed (Attempt #{retryCount}). Reason: {message}");
+
+                    _dialogService.ShowConfirmation("Re-try MES booking",
                         $"MES Booking Failed.\r\n MES booking for {SerialNumber} failed ,reason: {message}. Do you want to retry?",
                         OnConfirm: () => { loop = true; },
                         OnCancel: () =>
                         {
                             Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.BOOKING_OP_FAILED;
-                            loop = false; return;
+                            loop = false;
                         }
-                );
-                if (!loop) break;
-
+                    );
+                    if (!loop) break;
+                }
             }
         }
 
-    }
 
-    private async Task<(bool success, string message)> StartiTACBookingAsync(string snr)
+        private async Task<(bool success, string message)> StartiTACBookingAsync(string snr)
         {
             (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
 
@@ -315,6 +335,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     var data = GetDataForLabel(snr);
                     if (data != null && data.Shipping.ToUpper() == "Y")
                     {
+                        Log.Information($"Add attributes for SN {snr}");
                         await _api.SetUserWhoManAsync(_session.Station, snr, _session.UserName);
                         await _api.AppendMESAttrAsync(_session.Station, snr);
                     }
@@ -323,12 +344,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
                     break;
                 }
-                else
+                else  // only retry if MES booking has failed
                 {
                     if (message.Contains("MES is inactive")) // MES is not active, do not retry.
                         break;
 
-                    await Task.Delay(100); // only retry if MES booking has failed
+                    await Task.Delay(100);
                 }
             }
 
@@ -437,6 +458,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             );
 
         }
+
+
         public void OnLoaded()
         {
             OnFocusRequested("SNR");

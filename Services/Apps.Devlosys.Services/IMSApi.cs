@@ -1,75 +1,39 @@
 ﻿using Apps.Devlosys.Infrastructure;
 using Apps.Devlosys.Infrastructure.Models;
-
 using Apps.Devlosys.Services.Interfaces;
-
 using com.itac.artes;
-
 using com.itac.mes.imsapi.client.dotnet;
-
 using com.itac.mes.imsapi.domain.container;
-
 using Serilog;
-
 using System;
-
 using System.Collections.Generic;
-
 using System.Diagnostics;
-
 using System.IO;
-
 using System.Linq;
-
 using System.Net;
-
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
 using System.Windows;
-
 using System.Xml;
-
 using System.Xml.Linq;
-
 using static com.itac.mes.imsapi.client.dotnet.IMSApiDotNetConstants;
 
-
-
 namespace Apps.Devlosys.Services
-
 {
-
     public class IMSApi : IIMSApi
-
     {
-
         private readonly string BIN_DATA_STATION_NUMBER = "TG01-SMT-LAS-L01-10";
-
-
-
         private IIMSApiDotNet imsapi = null;
-
         private IMSApiSessionContextStruct sessionContext = null;
-
-
 
         #region Properties
 
-
-
         public string ItacVersion { get; set; }
-
-
 
         #endregion
 
-
-
         #region Public Methods
-
-
 
         public bool ItacConnection(AppSession session)
 
@@ -92,8 +56,6 @@ namespace Apps.Devlosys.Services
             return IMSApiInit() && RegLogin(session.Station);
 
         }
-
-
 
         public int ItacShutDown()
 
@@ -130,8 +92,6 @@ namespace Apps.Devlosys.Services
             }
 
         }
-
-
 
         public bool CheckUser(string station, string username, string password)
 
@@ -195,8 +155,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         public int GetUserLevel(string station, string username)
 
         {
@@ -214,8 +172,6 @@ namespace Apps.Devlosys.Services
                 : int.Parse(results[1]);
 
         }
-
-
 
         public bool CheckSerialNumberState(string station, string snr, out string state, out string error)
 
@@ -238,7 +194,6 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
 
         }
-
 
         public async Task<(bool Success, string SnState, int ErrorCode)> CheckSerialNumberStateAsync(string station, string snr)
 
@@ -284,7 +239,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
         public bool UploadState(string station, string snr, string[] inKeys, string[] inValues, out string[] results, out int code)
 
         {
@@ -301,7 +255,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
         public bool UploadState(string station, string snr, long bookDate, out int code)
 
         {
@@ -313,7 +266,6 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
 
         }
-
 
         public async Task<(bool, string[], int)> UploadStateAsync(string station, string snr, string[] inKeys, string[] inValues)
 
@@ -333,7 +285,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
         public async Task<(bool, int)> UploadStateAsync(string station, string snr, long bookDate)
 
         {
@@ -349,7 +300,6 @@ namespace Apps.Devlosys.Services
             });
 
         }
-
 
         public bool GetSerialNumberInfo(string station, string snr, string[] inKeys, out string[] results, out int code)
 
@@ -384,7 +334,6 @@ namespace Apps.Devlosys.Services
             });
 
         }
-
 
         public bool GetStateForProductDeclaration(string station, string snr)
 
@@ -458,7 +407,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
         public bool UnlockSnrItac(string station, string snr, out int code)
 
         {
@@ -496,7 +444,6 @@ namespace Apps.Devlosys.Services
             return result == RES_OK;
 
         }
-
 
         public async Task<List<PanelPositions>> GetPanelSNStateAsync(string station, string snr)
         {
@@ -563,8 +510,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         public int SetUserWhoMan(string station, string srn, string username)
 
         {
@@ -582,8 +527,6 @@ namespace Apps.Devlosys.Services
                 : int.Parse(results[1]);
 
         }
-
-
 
         public async Task<int> SetUserWhoManAsync(string station, string srn, string username)
 
@@ -621,50 +564,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
-
-
-        /*public void StartMES(string WorkCenter, string productNumber, string eventDateTime, string serialNumber, string Qte, string CycleTime, AppSession _session)
-
-        {
-
-            string motherForm = $"<?xml version=\"1.0\"?><FSA_INT_FlatFileManager xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"C:/Inetpub/wwwroot/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd\" Version=\"1.0\"><FIInvocationSynchronousEvent NodeType=\"FIInvocation\"><StandardOperation><OperationResolutionMethod>ByOperationCode</OperationResolutionMethod><OperationCode>SVC_MES_MI_ProductionDeclaration</OperationCode></StandardOperation><Parameters><Inputs><InputName>WorkCenter</InputName><InputValue>{WorkCenter}</InputValue></Inputs><Inputs><InputName>ProductNo</InputName><InputValue>{productNumber}</InputValue></Inputs><Inputs><InputName>EventDateTime</InputName><InputValue>{eventDateTime}</InputValue></Inputs><Inputs><InputName>SerialNo</InputName><InputValue>{serialNumber}</InputValue></Inputs><Inputs><InputName>Quantity</InputName><InputValue>{Qte}</InputValue></Inputs><Inputs><InputName>CycleTime</InputName><InputValue>{CycleTime}</InputValue></Inputs></Parameters></FIInvocationSynchronousEvent></FSA_INT_FlatFileManager>";
-
-            string beutyXML = PrettyXml(motherForm);
-
-
-
-            if (_session.UploadType == Infrastructure.UploadMethodEnum.API)
-
-            {
-
-                SendApi(beutyXML, _session.BarFlowServer);
-
-            }
-
-            else
-
-            {
-
-                UploadFile(beutyXML, _session.FtpUsername, _session.FtpPassword);
-
-            }
-
-
-
-            if (_session.IsItacInterlock)
-
-            {
-
-                LockSerial(_session.Station, serialNumber);
-
-            }
-
-        }*/
-
-
-
         public async Task<(bool status, string reason)> StartMESAsync(string WorkCenter, string productNumber, string eventDateTime, string serialNumber, string Qte, string CycleTime, AppSession _session)
         {
             string motherForm = $"<?xml version=\"1.0\"?><FSA_INT_FlatFileManager xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"C:/Inetpub/wwwroot/SchemaRepository/XMLSchemas/FlexNet/FSA_INT_FlatFileManager.xsd\" Version=\"1.0\"><FIInvocationSynchronousEvent NodeType=\"FIInvocation\"><StandardOperation><OperationResolutionMethod>ByOperationCode</OperationResolutionMethod><OperationCode>SVC_MES_MI_ProductionDeclaration</OperationCode></StandardOperation><Parameters><Inputs><InputName>WorkCenter</InputName><InputValue>{WorkCenter}</InputValue></Inputs><Inputs><InputName>ProductNo</InputName><InputValue>{productNumber}</InputValue></Inputs><Inputs><InputName>EventDateTime</InputName><InputValue>{eventDateTime}</InputValue></Inputs><Inputs><InputName>SerialNo</InputName><InputValue>{serialNumber}</InputValue></Inputs><Inputs><InputName>Quantity</InputName><InputValue>{Qte}</InputValue></Inputs><Inputs><InputName>CycleTime</InputName><InputValue>{CycleTime}</InputValue></Inputs></Parameters></FIInvocationSynchronousEvent></FSA_INT_FlatFileManager>";
@@ -678,7 +577,7 @@ namespace Apps.Devlosys.Services
 
                     if (apiResponse.status == false)
                     {
-                        Log.Error("API call failed : " + apiResponse.reason);
+                        Log.Error($"API call for SN [{serialNumber}] failed : {apiResponse.reason}");
 
                         // Save XML to file only if MES has failed
                         if (_session.IsMESXMLActive)
@@ -690,7 +589,7 @@ namespace Apps.Devlosys.Services
                     }
                     else
                     {
-                        Log.Information("API call Ok : " + apiResponse.status);
+                        Log.Information($"API call for SN [{serialNumber}] Ok : " + apiResponse.status);
                         return (true, "PASS");
                     }
                 }
@@ -760,7 +659,6 @@ namespace Apps.Devlosys.Services
             }
         }
 
-
         public int VerifyMESAttr(string station, string serialNumber)
 
         {
@@ -819,8 +717,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         public async Task<int> AppendMESAttrAsync(string station, string serialNumber)
         {
             string[] attributeResultKeys = ["ATTRIBUTE_CODE", "ATTRIBUTE_VALUE", "ERROR_CODE"];
@@ -840,8 +736,6 @@ namespace Apps.Devlosys.Services
             });
 
         }
-
-
 
         public bool GetBinData(string bin, out string[] data, out int code)
 
@@ -905,8 +799,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         public string GetErrorText(int result)
 
         {
@@ -918,8 +810,6 @@ namespace Apps.Devlosys.Services
             return errorText;
 
         }
-
-
 
         public async Task<string> GetErrorTextAsync(int result)
 
@@ -937,10 +827,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
-
-
         public string[] GetGroups()
 
         {
@@ -953,15 +839,9 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         #endregion
 
-
-
         #region Private Methods
-
-
 
         private void IMSApiGetLibraryVersion()
 
@@ -976,8 +856,6 @@ namespace Apps.Devlosys.Services
             Log.Information(version);
 
         }
-
-
 
         private bool IMSApiInit()
 
@@ -1021,10 +899,7 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         private bool RegLogin(string station)
-
         {
 
             IMSApiSessionValidationStruct sessValData = new()
@@ -1081,8 +956,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         private void LockSerial(string station, string srn)
 
         {
@@ -1100,8 +973,6 @@ namespace Apps.Devlosys.Services
             imsapi.attribAppendAttributeValues(sessionContext, station, 0, srn, "-1", -1L, 0, attributeUploadKeys, attributeUploadValues, out _);
 
         }
-
-
 
         public async Task LockSerialAsync(string station, string srn)
 
@@ -1131,8 +1002,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
-
         public async Task<bool> SplitSnFromPanelAsync(string station, string snr)
 
         {
@@ -1161,9 +1030,7 @@ namespace Apps.Devlosys.Services
 
         }
 
-
         public async Task<(bool Success, string Message)> UploadFileAsync(string beautyXML, string username, string password)
-
         {
 
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "xml");
@@ -1211,7 +1078,6 @@ namespace Apps.Devlosys.Services
             }
 
         }
-
 
         private static async Task<(bool status, string reason)> SendApiAsync(string body, string barflow)
 
@@ -1345,7 +1211,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
         public async Task<(bool Success, string Message)> UploadFileToFtpAsync(string url, string filePath, string username, string password)
 
         {
@@ -1397,7 +1262,6 @@ namespace Apps.Devlosys.Services
             }
 
         }
-
 
         private void WriteToFile(string Message)
 
@@ -1453,7 +1317,6 @@ namespace Apps.Devlosys.Services
 
         }
 
-
         private static string PrettyXml(string xml)
 
         {
@@ -1489,8 +1352,6 @@ namespace Apps.Devlosys.Services
             return stringBuilder.ToString();
 
         }
-
-
 
         private void PrintErrorText(int resultValue, string function)
 
@@ -1529,8 +1390,6 @@ namespace Apps.Devlosys.Services
             }
 
         }
-
-
 
         #endregion
 

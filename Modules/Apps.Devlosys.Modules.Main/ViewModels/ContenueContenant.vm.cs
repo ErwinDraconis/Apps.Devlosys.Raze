@@ -30,8 +30,9 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             _api = Container.Resolve<IIMSApi>();
             _session = Container.Resolve<AppSession>();
 
-            OnSNTxtKeyDown = new DelegateCommand(OnSNTxtKeyDownHandler);
-            ResultList = new ObservableCollection<GaliaResult>();
+            OnGaliaTxtKeyDown = new DelegateCommand(OnGaliaTxtKeyDownHandler);
+            OnSNTxtKeyDown    = new DelegateCommand(OnSNTxtKeyDownHandler);
+            ResultList        = new ObservableCollection<GaliaResult>();
         }
 
         #endregion
@@ -170,6 +171,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
+        public ICommand OnGaliaTxtKeyDown { get; set; }
+
+        private void OnGaliaTxtKeyDownHandler()
+        {
+            IsPrintManuelleLabel = false;
+        }
         #endregion
 
         #region Protected Methodes
