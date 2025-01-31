@@ -573,6 +573,9 @@ namespace Apps.Devlosys.Services
             {
                 if (_session.UploadType == Infrastructure.UploadMethodEnum.API)
                 {
+                    // save XML file
+                    await SaveXmlToFileAsync(prettyXML, productNumber, serialNumber);
+
                     var apiResponse = await SendApiAsync(prettyXML, _session.BarFlowServer);
 
                     if (apiResponse.status == false)
@@ -580,10 +583,10 @@ namespace Apps.Devlosys.Services
                         Log.Error($"API call for SN [{serialNumber}] failed : {apiResponse.reason}");
 
                         // Save XML to file only if MES has failed
-                        if (_session.IsMESXMLActive)
-                        {
-                            await SaveXmlToFileAsync(prettyXML, productNumber, serialNumber);
-                        }
+                        //if (_session.IsMESXMLActive)
+                        //{
+                        //    await SaveXmlToFileAsync(prettyXML, productNumber, serialNumber);
+                        //}
 
                         return (false, apiResponse.reason);
                     }
