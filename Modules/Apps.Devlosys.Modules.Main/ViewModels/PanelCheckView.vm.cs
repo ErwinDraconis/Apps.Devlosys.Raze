@@ -132,6 +132,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             if (panelsResult == null || panelsResult.Count == 0)
             {
                 string error = $"There is no panel record found for this SN [{SNR}]. An empty list is returned: count {panelsResult?.Count}";
+                Log.Warning(error);
                 _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
                 return;
             }
@@ -139,25 +140,34 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             if (panelsResult.Count == 1)
             {
                 string error = "PCB does not belong to Panel anymore, this configuration is not allowed! Part will not be booked.";
+                Log.Warning(error);
                 _dialogService.ShowOkDialog(DialogsResource.GlobalErrorTitle, error, OkDialogType.Error);
                 return;
             }
 
             // Display panel layout in Gray
             Positions.AddRange(panelsResult);
+            Log.Information($"Loaded {panelsResult.Count} positions for SN [{SNR}]. Processing now...");
 
             // Loop through all PCBs and perform iTAC and MES booking on OK parts,Scrap or Failed parts will be blocked (Interlock)
             foreach (var position in panelsResult)
             {
                 try
                 {
+                    if (position == null)
+                    {
+                        Log.Warning($"A null position was found in panelsResult for SN [{SNR}]. Skipping...");
+                        continue;
+                    }
 #if RELEASE
                     if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                     {
+                        Log.Information($"[START] ProcessBookingAsync: Processing SN [{position.SerialNumber}] at station [{_session.Station}].");
                         await ProcessBookingAsync(position.SerialNumber);
                     }
                     else
                     {
+                        Log.Warning($"SN [{position.SerialNumber}] has a failed iTAC status. Interlock window will be shown.");
                         Positions.FirstOrDefault(x => x.SerialNumber == position.SerialNumber).DisplayStatus = (int)position.Status;
                         iTAC_Check_SN_RSLT_ENUM status = Enum.IsDefined(typeof(iTAC_Check_SN_RSLT_ENUM), position.Status)
                                                         ? (iTAC_Check_SN_RSLT_ENUM)position.Status
@@ -175,7 +185,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"Exception Occured : ProcessBookingAsync - Exception occured for SN {position.SerialNumber} - error : {ex.Message} {Environment.NewLine} {ex.StackTrace} ");
+                    Log.Error($"[EXCEPTION] SN [{position?.SerialNumber ?? "Unknown"}] at station [{_session.Station}] - Error: {ex.Message}\n{ex}");
                     _dialogService.ShowOkDialog("Exception Occured", $"{ex.Message}", OkDialogType.Error);
                 }
             }
@@ -185,8 +195,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task ProcessBookingAsync(string SerialNumber)
         {
-            Log.Information($"[START] ProcessBookingAsync: Processing SN [{SerialNumber}] at station [{_session.Station}].");
-
             bool loop = false;
             int retryCount = 0;
 
