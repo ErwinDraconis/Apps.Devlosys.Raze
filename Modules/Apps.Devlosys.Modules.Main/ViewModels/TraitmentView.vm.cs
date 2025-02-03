@@ -229,14 +229,13 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 {
                     switch (TraitementOption)
                     {
+                        case TraitementEnum.BOTH:
                         case TraitementEnum.BOOKING:
 
                             await ProcessBookingAsync();
                             break;
 
                         case TraitementEnum.LABLING:
-                        case TraitementEnum.BOTH:
-
                             pcbState = CheckPcb(SNR, out errCode, out errDesc);
 
                             if (pcbState)
@@ -256,6 +255,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                             }
 
                             break;
+
                         case TraitementEnum.MES:
                             if (_session.IsMESActive)
                             {
@@ -639,6 +639,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             if (!founded)
             {
                 _dialogService.ShowOkDialog("Information", "No record found with this part number, try to add data in bin table ", OkDialogType.Warning);
+                Log.Error($"No record found for this SN [{snr}], try to add data in bin table ");
             }
 
             return data;
@@ -830,9 +831,16 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             // 4: Set up for retry logic for MES booking 
             if (await AttemptMesBookingAsync(SNR))
             {
-                // Append attr only after MES booking is Ok
                 var data = GetDataForLabel(SNR);
-                if (data?.Shipping?.ToUpper() == "Y" && _session.IsMESActive)
+                // Prevent attr addition and iTAC booling when data is null or missing
+                if (data == null || string.IsNullOrWhiteSpace(data.Shipping))
+                {
+                    PrintResult(false, $"{SNR} : Attr and Booking skipped due to missing data in bin file");
+                    return;
+                }
+
+                // Append attr only after MES booking is Ok
+                if (data.Shipping.ToUpper() == "Y" && _session.IsMESActive)
                 {
                     await _api.SetUserWhoManAsync(_session.Station, SNR, _session.UserName);
                     await _api.AppendMESAttrAsync(_session.Station, SNR);
@@ -842,13 +850,17 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 if (await StartBookingAsync(SNR))
                 {
                     await _api.LockSerialAsync(_session.Station, SNR);
-                    
-                    // print label
-                    if (!StartLabling(SNR))
+
+                    // print label only for menu Booking and labeling
+                    if (TraitementOption == TraitementEnum.BOTH)
                     {
-                        PrintResult(false, $"{SNR} : Faild");
-                        return;
+                        if (!StartLabling(SNR))
+                        {
+                            PrintResult(false, $"Print label for {SNR} : Faild");
+                            return;
+                        }
                     }
+                      
                 }
             }
             else

@@ -119,7 +119,7 @@ namespace Apps.Devlosys.Services
 
 
 
-            Log.Information($"Trying to connect to iTAC server with following credentials : user name {username} , pass word {password} ");
+            Log.Information($"Trying to connect to iTAC server with following credentials : user name {username} ");
 
 
 
@@ -629,7 +629,7 @@ namespace Apps.Devlosys.Services
                 serialNumber  = SanitizeInput(serialNumber);
 
                 string baseDirectory  = AppDomain.CurrentDomain.BaseDirectory;
-                string errorDirectory = Path.Combine(baseDirectory, "MesXmlError");
+                string errorDirectory = Path.Combine(baseDirectory, "MesXml");
 
                 if (!Directory.Exists(errorDirectory))
                 {
