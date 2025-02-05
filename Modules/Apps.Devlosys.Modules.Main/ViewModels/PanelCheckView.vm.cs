@@ -346,10 +346,14 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         Log.Information($"Add attributes for SN {snr}");
                         await _api.SetUserWhoManAsync(_session.Station, snr, _session.UserName);
                         await _api.AppendMESAttrAsync(_session.Station, snr);
+                        MES_BOOKING_RSLT = true;
                     }
-
-                    MES_BOOKING_RSLT = true;
-
+                    else
+                    {
+                        Log.Warning($"MES ATTR will not be added, data in BIN file is set to [{data.Shipping.ToUpper()}]");
+                        MES_BOOKING_RSLT = true;
+                    }
+                    
                     break;
                 }
                 else  // only retry if MES booking has failed
@@ -379,19 +383,22 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             var data = GetDataForLabel(lastSnr);
             if (data == null)
             {
+                Log.Error($"Label data not available for SN {lastSnr}");
                 return (false, $"Label data not available for SN {lastSnr}");
             }
 
             
             if (data.Shipping.ToUpper() != "Y")
             {
-                return (true, $"No MES for SN {lastSnr} is needed, data in File [{data.Shipping.ToUpper()}]");
+                Log.Warning($"No MES for SN {lastSnr} is needed, data in BIN File is [{data.Shipping.ToUpper()}]");
+                return (true, $"No MES for SN {lastSnr} is needed, data in BIN File is [{data.Shipping.ToUpper()}]");
             }
 
             if (!_session.IsMESActive)
             {
+                Log.Warning("MES booking is inactive");
                 _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, TraitmentResource.MESDisableMessage, OkDialogType.Warning);
-                return (false, "MES is inactive"); 
+                return (false, "MES booking is inactive"); 
             }
             
             string date = DateTime.Now.ToString(_session.DateFormat, CultureInfo.InvariantCulture);
@@ -407,6 +414,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             BinData data = null;
 
             string line;
+            bool founded = false;
 
             StreamReader file = new(AppDomain.CurrentDomain.BaseDirectory + "\\data\\bin.txt");
 
@@ -429,9 +437,17 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                             Quantity = col[7],
                         };
 
+                        founded = true;
+
                         break;
                     }
                 }
+            }
+
+            if (!founded)
+            {
+                _dialogService.ShowOkDialog("Information", "No record found with this part number, try to add data in bin table ", OkDialogType.Warning);
+                Log.Error($"No record found for this SN [{snr}], try to add data in bin table ");
             }
 
             return data;

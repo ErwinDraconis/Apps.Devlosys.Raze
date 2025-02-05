@@ -1,6 +1,7 @@
 ﻿using Apps.Devlosys.Infrastructure.Models;
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Apps.Devlosys.Controls.Helpers
@@ -10,15 +11,26 @@ namespace Apps.Devlosys.Controls.Helpers
         public static void WriteToCsv(GaliaResult galiaResult)
         {
             string CC_FolderName = "CC_logs";
-            string currentDate   = DateTime.Now.ToString("yyyMMdd_HHmmss");
+            string currentDate = DateTime.Now.ToString("yyyyMMdd"); 
             string directoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, CC_FolderName);
-            string fileName      = $"{galiaResult.GaliaNb}_{galiaResult.GaliaPN}_{currentDate}.txt";
-            string filePath      = Path.Combine(directoryPath, fileName);
+
+            // Generate file name using GaliaNb, GaliaPN, and date
+            string fileName = $"{galiaResult.GaliaNb}_{galiaResult.GaliaPN}_{currentDate}.txt";
+            string filePath = Path.Combine(directoryPath, fileName);
             var csv = new StringBuilder();
 
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
+            }
+
+            // Check if a file already exists
+            string existingFile = Directory.GetFiles(directoryPath, $"{galiaResult.GaliaNb}_{galiaResult.GaliaPN}_*.txt")
+                                           .FirstOrDefault();
+
+            if (existingFile != null)
+            {
+                filePath = existingFile;
             }
 
             bool fileExists = File.Exists(filePath);
@@ -40,7 +52,6 @@ namespace Apps.Devlosys.Controls.Helpers
                 // Log.Error($"Failed to write CSV for Galia result: {ex.Message}");
             }
         }
-
 
     }
 }

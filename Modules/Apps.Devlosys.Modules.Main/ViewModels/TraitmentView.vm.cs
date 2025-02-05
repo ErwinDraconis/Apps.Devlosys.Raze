@@ -803,7 +803,11 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task ProcessBookingAsync()
         {
-            // 1: Check if booking is for Board only (board in panel not allowed) 
+            // 1: Check If SN format is correct 
+            if(false == Check_Intermediate_SN_Format(SNR))
+                 return; 
+
+            // 2: Check if booking is for Board only (board in panel not allowed) 
             var panelResult = await _api.GetPanelSNStateAsync(_session.Station, SNR);
 
             if (panelResult != null && panelResult.Count > 1 && !_session.IsPANELBookingAllowedInPCBView)
@@ -812,7 +816,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return;
             }
 
-            // 2: Check SN State  
+            // 3: Check SN State  
             var (pcbState, errCode, errDesc) = await CheckPcbAsync(SNR);
             if (!pcbState)
             {
@@ -820,7 +824,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return;
             }
 
-            // 3: Verify if iTAC attributes exist  
+            // 4: Verify if iTAC attributes exist  
             var isAttrAppended = await _api.VerifyMESAttrAsync(_session.Station, SNR);
             if (isAttrAppended == 0) // Attr exist
             {
@@ -828,11 +832,11 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return;
             }
 
-            // 4: Set up for retry logic for MES booking 
+            // 5: Set up for retry logic for MES booking 
             if (await AttemptMesBookingAsync(SNR))
             {
                 var data = GetDataForLabel(SNR);
-                // Prevent attr addition and iTAC booling when data is null or missing
+                // Prevent attr addition and iTAC booking when data is null or missing
                 if (data == null || string.IsNullOrWhiteSpace(data.Shipping))
                 {
                     PrintResult(false, $"{SNR} : Attr and Booking skipped due to missing data in bin file");
@@ -950,9 +954,22 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task<bool> MesSavingProductAsync(string snr)
         {
-            string lastSnr = (_session.LabelType == LabelTypeEnum.TG01) ? snr.Between("_", "_") : snr.Substring(4, 10).ToString();
-            int gg = 0;
+            string lastSnr = string.Empty;
+            try
+            {
+                lastSnr = (_session.LabelType == LabelTypeEnum.TG01)
+                ? snr.Between("_", "_")
+                : snr.Substring(4, 10).ToString();
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle,$"SN has a wrong format or length is unsupported: [{snr}]", 
+                    OkDialogType.Warning);
+                Log.Error($"Cannot get the intermediate SN from [{snr}], incorrect format or length. Error: {ex.Message}");
+                return false;
+            }
 
+            int gg = 0;
             var data = GetDataForLabel(lastSnr);
             if (data == null)
             {
@@ -1000,6 +1017,25 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             return true;
         }
 
+        private bool Check_Intermediate_SN_Format(string snr)
+        {
+            string lastSnr = string.Empty;
+            try
+            {
+                lastSnr = (_session.LabelType == LabelTypeEnum.TG01)
+                ? snr.Between("_", "_")
+                : snr.Substring(4, 10).ToString();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, $"SN has a wrong format or length is unsupported: [{snr}]",
+                    OkDialogType.Warning);
+                Log.Error($"Cannot get the intermediate SN from [{snr}], incorrect format or length. Error: {ex.Message}");
+                return false;
+            }
+        }
         private async Task<(bool status, string reason)> StartMESWithDelayAsync(string snr, string reference, double delayMinutes)
         {
             string date = DateTime.Now.AddMinutes(delayMinutes).ToString(_session.DateFormat, CultureInfo.InvariantCulture);
