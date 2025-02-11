@@ -412,18 +412,21 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         private BinData GetDataForLabel(string snr)
         {
             BinData data = null;
-
-            string line;
+            string line  = string.Empty;
             bool founded = false;
+            string interSnr = (_session.LabelType == LabelTypeEnum.TG01)
+                                ? snr.Between("_", "_")
+                                : snr.Substring(4, 10).ToString();
+
 
             StreamReader file = new(AppDomain.CurrentDomain.BaseDirectory + "\\data\\bin.txt");
-
+            
             while ((line = file.ReadLine()) != null)
             {
                 string[] col = line.Split('|');
                 if (col.Length > 7)
                 {
-                    if (col[0] == snr)
+                    if (col[0] == interSnr)
                     {
                         data = new BinData()
                         {
