@@ -9,6 +9,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO.Ports;
 using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 
 namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
@@ -38,6 +39,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         private bool _isFVTInterlock;
         private bool _isPrintManuelleLabel;
         private bool _isPANELBookingAllowedInPCBView;
+        private bool _isPANELViewEnabled;
         private string _bin;
         private string _leakHour;
         private string _workCenter;
@@ -176,6 +178,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         {
             get => _isPANELBookingAllowedInPCBView;
             set => SetProperty(ref _isPANELBookingAllowedInPCBView, value);
+        }
+
+        public bool IsPANELViewEnabled
+        {
+            get => _isPANELViewEnabled;
+            set => SetProperty(ref _isPANELViewEnabled, value);
         }
 
         public string Bin
@@ -321,7 +329,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
 
         #region Command Handlers
 
-        private void SaveCommandHandler()
+        async private void SaveCommandHandler()
         {
             _session.ProjectType = ProjectType;
             _session.LabelType = LabelType;
@@ -357,7 +365,13 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             _session.StopBitsInterLock  = SelectedStopBit;
             _session.ParitiesInterLock  = SelectedParity;
             _session.DataBitsInterLock  = SelectedDataBit;
+            
 
+            if(_session.IsPANELViewEnabled != IsPANELViewEnabled)
+            {
+                MessageBox.Show("The panel view visibility has changed. Restart the application for the changes to take effect.", "View visibily changed",MessageBoxButton.OK,MessageBoxImage.Information);
+            }
+            _session.IsPANELViewEnabled = IsPANELViewEnabled;
             _session.Save();
             _container.RegisterInstance(_session);
 
@@ -436,6 +450,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             SelectedStopBit  = _session.StopBitsInterLock;
             SelectedParity   = _session.ParitiesInterLock;
             SelectedDataBit  = _session.DataBitsInterLock;
+
+            IsPANELViewEnabled = _session.IsPANELViewEnabled;
         }
 
         #endregion

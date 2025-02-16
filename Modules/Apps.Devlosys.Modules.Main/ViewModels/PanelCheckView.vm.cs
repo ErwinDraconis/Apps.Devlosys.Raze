@@ -378,20 +378,18 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         private async Task<(bool success, string message)> MesSavingProductAsync(string snr)
         {
-            string lastSnr = (snr.Contains("_")) ? snr.Between("_", "_") : snr.Substring(4, 10).ToString();
-
-            var data = GetDataForLabel(lastSnr);
+            var data = GetDataForLabel(snr);
             if (data == null)
             {
-                Log.Error($"Label data not available for SN {lastSnr}");
-                return (false, $"Label data not available for SN {lastSnr}");
+                Log.Error($"Label data not available for SN {snr}");
+                return (false, $"Label data not available for SN {snr}");
             }
 
             
             if (data.Shipping.ToUpper() != "Y")
             {
-                Log.Warning($"No MES for SN {lastSnr} is needed, data in BIN File is [{data.Shipping.ToUpper()}]");
-                return (true, $"No MES for SN {lastSnr} is needed, data in BIN File is [{data.Shipping.ToUpper()}]");
+                Log.Warning($"No MES for SN {snr} is needed, data in BIN File is [{data.Shipping.ToUpper()}]");
+                return (true, $"No MES for SN {snr} is needed, data in BIN File is [{data.Shipping.ToUpper()}]");
             }
 
             if (!_session.IsMESActive)
@@ -414,9 +412,15 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             BinData data = null;
             string line  = string.Empty;
             bool founded = false;
-            string interSnr = (_session.LabelType == LabelTypeEnum.TG01)
-                                ? snr.Between("_", "_")
-                                : snr.Substring(4, 10).ToString();
+            string interSnr = string.Empty; 
+
+            if (!string.IsNullOrEmpty(snr))
+            {
+                if (snr.Contains("_"))
+                    interSnr = snr.Between("_", "_");
+                else
+                    interSnr = snr.Substring(4, 10);
+            }
 
 
             StreamReader file = new(AppDomain.CurrentDomain.BaseDirectory + "\\data\\bin.txt");

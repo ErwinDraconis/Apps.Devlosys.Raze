@@ -50,6 +50,8 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="20" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
                                     <ComboBox ItemsSource="{Binding Projects}"
@@ -63,6 +65,11 @@
                                           Margin="{StaticResource TextBoxSpace}"
                                           Padding="{StaticResource TextBoxStyle.FormPadding}"
                                           materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.PrintMethodText}" />
+
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal">
+                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" IsChecked="{Binding IsPANELViewEnabled}" />
+                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="Enable Panel view" ToolTip="Enable panel view" Margin="0 5 0 0" />
+                                    </StackPanel>
                                 </Grid>
                             </StackPanel>
                         </GroupBox>

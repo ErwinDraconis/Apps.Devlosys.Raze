@@ -259,7 +259,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         case TraitementEnum.MES:
                             if (_session.IsMESActive)
                             {
-                                BinData data = GetDataForLabel(SNR.Between("_", "_"));
+                                BinData data = GetDataForLabel(SNR);
 
                                 if (data != null)
                                 {
@@ -606,10 +606,16 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             BinData data = null;
             string line  = string.Empty; 
             bool founded = false;
-            string interSnr = (_session.LabelType == LabelTypeEnum.TG01)
-                                ? snr.Between("_", "_")
-                                : snr.Substring(4, 10).ToString();
+            string interSnr = string.Empty;
 
+            if (!string.IsNullOrEmpty(snr))
+            {
+                if (snr.Contains("_"))
+                    interSnr = snr.Between("_", "_");
+                else
+                    interSnr = snr.Substring(4, 10);
+            }
+           
             StreamReader file = new(AppDomain.CurrentDomain.BaseDirectory + "\\data\\bin.txt");
 
             while ((line = file.ReadLine()) != null)
@@ -959,9 +965,20 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             string lastSnr = string.Empty;
             try
             {
-                lastSnr = (_session.LabelType == LabelTypeEnum.TG01)
-                ? snr.Between("_", "_")
-                : snr.Substring(4, 10).ToString();
+                if (!string.IsNullOrEmpty(snr))
+                {
+                    if (snr.Contains("_"))
+                        lastSnr = snr.Between("_", "_");
+                    else
+                        lastSnr = snr.Substring(4, 10);
+                }
+                else
+                {
+                    _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, $"SN has a wrong format or length is unsupported: [{snr}]",
+                    OkDialogType.Warning);
+                    Log.Error($"Cannot get the intermediate SN from [{snr}], incorrect format or length");
+                    return false;
+                }
             }
             catch (Exception ex)
             {
@@ -972,7 +989,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
 
             int gg = 0;
-            var data = GetDataForLabel(lastSnr);
+            var data = GetDataForLabel(snr);
             if (data == null)
             {
                 return false;
@@ -1024,11 +1041,23 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             string lastSnr = string.Empty;
             try
             {
-                lastSnr = (_session.LabelType == LabelTypeEnum.TG01)
-                ? snr.Between("_", "_")
-                : snr.Substring(4, 10).ToString();
+                if (!string.IsNullOrEmpty(snr))
+                {
+                    if (snr.Contains("_"))
+                        lastSnr = snr.Between("_", "_");
+                    else
+                        lastSnr = snr.Substring(4, 10);
 
-                return true;
+                    return true;
+                }
+                else
+                {
+                    _dialogService.ShowOkDialog(DialogsResource.GlobalWarningTitle, $"SN has a wrong format or length is unsupported: [{snr}]",
+                                        OkDialogType.Warning);
+                    Log.Error($"Cannot get the intermediate SN from [{snr}], incorrect format or length.");
+                    return false;
+                }
+                
             }
             catch (Exception ex)
             {

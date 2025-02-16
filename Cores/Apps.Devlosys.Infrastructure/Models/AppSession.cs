@@ -38,7 +38,7 @@ namespace Apps.Devlosys.Infrastructure.Models
         private const string StopBitsIL       = "StopBitsIL";
         private const string ParitiesIL       = "ParitiesIL";
         private const string DataBitsIL       = "DataBitsIL";
-
+        private const string IS_PANEL_VIEW_ENABLED = "IsPanelVE";
         public AppSession()
         {
             configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
@@ -136,6 +136,12 @@ namespace Apps.Devlosys.Infrastructure.Models
             set => configuration.AppSettings.Settings[ALLOW_PANEL_BOOKING_ON_PCB_VIEW].Value = value ? "T" : "F";
         }
 
+        public bool IsPANELViewEnabled
+        {
+            get => configuration.AppSettings.Settings[IS_PANEL_VIEW_ENABLED].Value.ToUpper() == "T";
+            set => configuration.AppSettings.Settings[IS_PANEL_VIEW_ENABLED].Value = value ? "T" : "F";
+        }
+        
         public string WorkCenter
         {
             get => configuration.AppSettings.Settings[WORK_CENTER_NAME].Value;

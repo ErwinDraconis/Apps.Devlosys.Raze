@@ -43,9 +43,9 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         public MainViewModel(IContainerExtension container) : base(container)
         {
-            _regionManager = Container.Resolve<IRegionManager>();
+            _regionManager   = Container.Resolve<IRegionManager>();
             _eventAggregator = Container.Resolve<IEventAggregator>();
-            _dialogService = Container.Resolve<IDialogService>();
+            _dialogService   = Container.Resolve<IDialogService>();
             _contentDialogService = Container.Resolve<IContentDialogService>();
             _api = Container.Resolve<IIMSApi>();
 
@@ -125,7 +125,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         private void SetMenuItems()
         {
             _session = Container.Resolve<AppSession>();
-
+            
             MenuButtons = new ObservableCollection<MenuButton>
             {
                 new MenuButton()
@@ -170,20 +170,10 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                          _eventAggregator.GetEvent<ConfigChangedEvent>().Publish();
                      }),
                 },
-                /* new MenuButton()
-                {
-                     Title = "CC-Classic",
-                     Kind = "PackageVariant",
-                     IsEnable = true,
-                     Action = new DelegateCommand(() => {
-                         _dialogService.Show(DialogNames.ContenueContenantDialog, () =>{ });
 
-                         _eventAggregator.GetEvent<ConfigChangedEvent>().Publish();
-                     }),
-                },*/
                 new MenuButton()
                 {
-                     Title = "CC (New)",
+                     Title = "CC",
                      Kind = "PackageVariant",
                      IsEnable = true,
                       Action = new DelegateCommand(() => {
@@ -215,6 +205,11 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                      }),
                 }
             };
+
+            if (!_session.IsPANELViewEnabled)
+            {
+                MenuButtons.RemoveAt(0);
+            }
         }
 
         #endregion
@@ -224,8 +219,10 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         public void OnLoaded()
         {
             SetMenuItems();
-
-            _regionManager.RequestNavigate(RegionNames.MainViewRegion, ViewNames.PanelCheckView);
+            if (_session.IsPANELViewEnabled)
+                _regionManager.RequestNavigate(RegionNames.MainViewRegion, ViewNames.PanelCheckView);
+            else
+                _regionManager.RequestNavigate(RegionNames.MainViewRegion, ViewNames.TraitmentView);
         }
 
         public void OnUnloaded()
