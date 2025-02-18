@@ -12,6 +12,7 @@ namespace Apps.Devlosys.Infrastructure.Models
         private const string LABLING_STATION_NAME = "lablingStation";
         private const string PROJECT_TYPE_NAME = "PRO";
         private const string LABEL_TYPE_NAME = "DTC";
+        private const string VIEW_DISPLAY_OPTION = "VIEW_D_OPT";
         private const string ITAC_SERVER_NAME = "ItacIp";
         private const string SHIPPING_PRINTER_NAME = "zebraip";
         private const string PRINT_MODE_NAME = "printmode";
@@ -33,12 +34,12 @@ namespace Apps.Devlosys.Infrastructure.Models
         private const string LEAK_HOURS_NAME = "LeakHours";
         private const string DATE_FORMAT_NAME = "dateFormat";
         private const string TRAITEMENT_NAME = "TRAIT";
-        private const string PortIL           = "PortIL";
+        private const string INTER_LOCK_COMPort = "COMPortIL";
         private const string BaudRatesIL      = "BaudRatesIL";
         private const string StopBitsIL       = "StopBitsIL";
         private const string ParitiesIL       = "ParitiesIL";
         private const string DataBitsIL       = "DataBitsIL";
-        private const string IS_PANEL_VIEW_ENABLED = "IsPanelVE";
+
         public AppSession()
         {
             configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
@@ -80,6 +81,12 @@ namespace Apps.Devlosys.Infrastructure.Models
         {
             get => (LabelTypeEnum)Enum.Parse(typeof(LabelTypeEnum), configuration.AppSettings.Settings[LABEL_TYPE_NAME].Value.ToUpper());
             set => configuration.AppSettings.Settings[LABEL_TYPE_NAME].Value = value.GetEnum();
+        }
+
+        public DisplayOptionEnum DisplayOption
+        {
+            get => (DisplayOptionEnum)Enum.Parse(typeof(DisplayOptionEnum), configuration.AppSettings.Settings[VIEW_DISPLAY_OPTION].Value.ToUpper());
+            set => configuration.AppSettings.Settings[VIEW_DISPLAY_OPTION].Value = value.GetEnum();
         }
 
         public string ItacServer
@@ -135,13 +142,7 @@ namespace Apps.Devlosys.Infrastructure.Models
             get => configuration.AppSettings.Settings[ALLOW_PANEL_BOOKING_ON_PCB_VIEW].Value.ToUpper() == "T";
             set => configuration.AppSettings.Settings[ALLOW_PANEL_BOOKING_ON_PCB_VIEW].Value = value ? "T" : "F";
         }
-
-        public bool IsPANELViewEnabled
-        {
-            get => configuration.AppSettings.Settings[IS_PANEL_VIEW_ENABLED].Value.ToUpper() == "T";
-            set => configuration.AppSettings.Settings[IS_PANEL_VIEW_ENABLED].Value = value ? "T" : "F";
-        }
-        
+                
         public string WorkCenter
         {
             get => configuration.AppSettings.Settings[WORK_CENTER_NAME].Value;
@@ -218,8 +219,8 @@ namespace Apps.Devlosys.Infrastructure.Models
 
         public string PortCOMInterlock
         {
-            get => configuration.AppSettings.Settings[PortIL].Value;
-            set => configuration.AppSettings.Settings[PortIL].Value = value;
+            get => configuration.AppSettings.Settings[INTER_LOCK_COMPort].Value;
+            set => configuration.AppSettings.Settings[INTER_LOCK_COMPort].Value = value;
         }
 
         public string BaudRatesInterLock

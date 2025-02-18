@@ -863,6 +863,9 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 {
                     await _api.LockSerialAsync(_session.Station, SNR);
 
+                    // Split SN from same as we did for Panel (email received 17-02-2025 from M.Benlmir)
+                    await _api.SplitSnFromPanelAsync(_session.Station, SNR);
+
                     // print label only for menu Booking and labeling
                     if (TraitementOption == TraitementEnum.BOTH)
                     {

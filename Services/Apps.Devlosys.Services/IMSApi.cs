@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -26,6 +27,8 @@ namespace Apps.Devlosys.Services
         private readonly string BIN_DATA_STATION_NUMBER = "TG01-SMT-LAS-L01-10";
         private IIMSApiDotNet imsapi = null;
         private IMSApiSessionContextStruct sessionContext = null;
+
+        private static readonly HttpClient httpClient = new HttpClient();
 
         #region Properties
 
@@ -1082,84 +1085,80 @@ namespace Apps.Devlosys.Services
 
         }
 
-        private static async Task<(bool status, string reason)> SendApiAsync(string body, string barflow)
-
+        /*private static async Task<(bool status, string reason)> SendApiAsync(string body, string barflow)
         {
-
             try
-
             {
-
                 string URL = "http://" + barflow + "/ReceiveXML/Receive.aspx";
-
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(URL);
-
                 request.Method = "POST";
-
                 request.ContentType = "text/xml";
-
                 request.ContentLength = body.Length;
 
-
-
                 using (StreamWriter requestWriter = new StreamWriter(await request.GetRequestStreamAsync(), Encoding.ASCII))
-
                 {
-
                     await requestWriter.WriteAsync(body);
-
                 }
 
-
-
                 using (HttpWebResponse httpResponse = (HttpWebResponse)await request.GetResponseAsync())
-
                 {
-
                     if (httpResponse.StatusCode == HttpStatusCode.OK)
-
                     {
-
                         return (true, null);
-
                     }
 
                     else
-
                     {
-
                         return (false, $"Unexpected response code: {(int)httpResponse.StatusCode} {httpResponse.StatusDescription}");
-
                     }
-
                 }
 
             }
 
             catch (WebException webEx)
-
             {
-
                 if (webEx.Response is HttpWebResponse errorResponse)
-
                 {
-
                     return (false, $"Web exception: {(int)errorResponse.StatusCode} {errorResponse.StatusDescription}");
-
                 }
 
                 return (false, $"Web exception: {webEx.Message}");
-
             }
 
             catch (Exception ex)
-
             {
-
                 return (false, $"General exception: {ex.Message}");
-
             }
 
+        }*/
+
+        private static async Task<(bool status, string reason)> SendApiAsync(string body, string barflow)
+        {
+            try
+            {
+                string URL  = $"http://{barflow}/ReceiveXML/Receive.aspx";
+                var content = new StringContent(body, Encoding.ASCII, "text/xml");
+
+                using (HttpResponseMessage response = await httpClient.PostAsync(URL, content))
+                {
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return (true, null);
+                    }
+                    else
+                    {
+                        return (false, $"Unexpected response code: {(int)response.StatusCode} {response.ReasonPhrase}");
+                    }
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                return (false, $"HTTP request exception: {httpEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"General exception: {ex.Message}");
+            }
         }
 
         public void UploadFileToFtp(string url, string filePath, string username, string password)

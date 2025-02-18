@@ -66,10 +66,12 @@
                                           Padding="{StaticResource TextBoxStyle.FormPadding}"
                                           materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.PrintMethodText}" />
 
-                                    <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                        <ToggleButton Style="{StaticResource MaterialDesignSwitchAccentToggleButton}" IsChecked="{Binding IsPANELViewEnabled}" />
-                                        <TextBlock Style="{StaticResource MaterialDesignBody2TextBlock}" Text="Enable Panel view" ToolTip="Enable panel view" Margin="0 5 0 0" />
-                                    </StackPanel>
+                                    <ComboBox Grid.Column="4" ItemsSource="{Binding DisplayOptions}"
+                                              SelectedItem="{Binding DisplayOption}"
+                                              Margin="{StaticResource TextBoxSpace}"
+                                              Padding="{StaticResource TextBoxStyle.FormPadding}"
+                                              materialDesign:HintAssist.Hint="{x:Static resx:ConfigResource.PrintMethodText}" />
+                                    
                                 </Grid>
                             </StackPanel>
                         </GroupBox>

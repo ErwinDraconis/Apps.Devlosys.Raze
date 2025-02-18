@@ -24,10 +24,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         private ObservableCollection<string> _ports;
         private ObservableCollection<PrintModeEnum> _printModes;
         private ObservableCollection<LabelTypeEnum> _labelTypes;
+        private ObservableCollection<DisplayOptionEnum> _displayOptions;
         private ObservableCollection<UploadMethodEnum> _uploadMethods;
         private ObservableCollection<ProjectEnum> _projects;
         private ProjectEnum _projectEnum;
         private LabelTypeEnum _labelType;
+        private DisplayOptionEnum _displayOption;
         private PrintModeEnum _printMode;
         private string _port;
         private string _station;
@@ -39,7 +41,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         private bool _isFVTInterlock;
         private bool _isPrintManuelleLabel;
         private bool _isPANELBookingAllowedInPCBView;
-        private bool _isPANELViewEnabled;
         private string _bin;
         private string _leakHour;
         private string _workCenter;
@@ -90,6 +91,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             set => SetProperty(ref _labelTypes, value);
         }
 
+        public ObservableCollection<DisplayOptionEnum> DisplayOptions
+        {
+            get => _displayOptions;
+            set => SetProperty(ref _displayOptions, value);
+        }
+
         public ObservableCollection<PrintModeEnum> PrintModes
         {
             get => _printModes;
@@ -112,6 +119,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         {
             get => _labelType;
             set => SetProperty(ref _labelType, value, () => RaisePropertyChanged(nameof(CanSave)));
+        }
+
+        public DisplayOptionEnum DisplayOption
+        {
+            get => _displayOption;
+            set => SetProperty(ref _displayOption, value, () => RaisePropertyChanged(nameof(CanSave)));
         }
 
         public PrintModeEnum PrintMode
@@ -178,12 +191,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         {
             get => _isPANELBookingAllowedInPCBView;
             set => SetProperty(ref _isPANELBookingAllowedInPCBView, value);
-        }
-
-        public bool IsPANELViewEnabled
-        {
-            get => _isPANELViewEnabled;
-            set => SetProperty(ref _isPANELViewEnabled, value);
         }
 
         public string Bin
@@ -333,7 +340,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         {
             _session.ProjectType = ProjectType;
             _session.LabelType = LabelType;
-
+            _session.DisplayOption = DisplayOption;
             _session.Station = Station;
             _session.LablingStation = LablingStation;
             _session.ItacServer = ItacServer;
@@ -366,12 +373,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             _session.ParitiesInterLock  = SelectedParity;
             _session.DataBitsInterLock  = SelectedDataBit;
             
-
-            if(_session.IsPANELViewEnabled != IsPANELViewEnabled)
-            {
-                MessageBox.Show("The panel view visibility has changed. Restart the application for the changes to take effect.", "View visibily changed",MessageBoxButton.OK,MessageBoxImage.Information);
-            }
-            _session.IsPANELViewEnabled = IsPANELViewEnabled;
             _session.Save();
             _container.RegisterInstance(_session);
 
@@ -391,13 +392,15 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
 
         private void LoadExistanceSerialCom()
         {
-            Projects = new ObservableCollection<ProjectEnum>() { ProjectEnum.VISUAL, ProjectEnum.INVISIBLE, ProjectEnum.FVT, ProjectEnum.MLS };
+            Projects       = new ObservableCollection<ProjectEnum>() { ProjectEnum.VISUAL, ProjectEnum.INVISIBLE, ProjectEnum.FVT, ProjectEnum.MLS };
 
-            LabelTypes = new ObservableCollection<LabelTypeEnum>() { LabelTypeEnum.TG01, LabelTypeEnum.TS };
+            LabelTypes     = new ObservableCollection<LabelTypeEnum>() { LabelTypeEnum.TG01, LabelTypeEnum.TS };
 
-            PrintModes = new ObservableCollection<PrintModeEnum>() { PrintModeEnum.NET, PrintModeEnum.SR };
+            DisplayOptions = new ObservableCollection<DisplayOptionEnum>() {  DisplayOptionEnum.BOTH, DisplayOptionEnum.PCB, DisplayOptionEnum.PANEL };
 
-            UploadMethods = new ObservableCollection<UploadMethodEnum>() { UploadMethodEnum.API, UploadMethodEnum.FTP };
+            PrintModes     = new ObservableCollection<PrintModeEnum>() { PrintModeEnum.NET, PrintModeEnum.SR };
+
+            UploadMethods  = new ObservableCollection<UploadMethodEnum>() { UploadMethodEnum.API, UploadMethodEnum.FTP };
 
             string[] ports = SerialPort.GetPortNames();
             Ports = new ObservableCollection<string>(ports);
@@ -416,8 +419,9 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
         {
             Title = Resources.I18N.ConfigResource.TitelText;
 
-            ProjectType = _session.ProjectType;
-            LabelType = _session.LabelType;
+            ProjectType   = _session.ProjectType;
+            LabelType     = _session.LabelType;
+            DisplayOption = _session.DisplayOption;
 
             Station = _session.Station;
             LablingStation = _session.LablingStation;
@@ -450,8 +454,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels.Dialogs
             SelectedStopBit  = _session.StopBitsInterLock;
             SelectedParity   = _session.ParitiesInterLock;
             SelectedDataBit  = _session.DataBitsInterLock;
-
-            IsPANELViewEnabled = _session.IsPANELViewEnabled;
         }
 
         #endregion

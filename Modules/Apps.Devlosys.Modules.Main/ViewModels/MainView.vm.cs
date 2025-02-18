@@ -130,7 +130,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             {
                 new MenuButton()
                 {
-                    Title = "Panel Ch.",
+                    Title = "Panel",
                     Kind = "Panel",
                     IsEnable = true,
                     Action = new DelegateCommand(() => {
@@ -140,7 +140,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
                 new MenuButton()
                 {
-                    Title = "DEP.",
+                    Title = "PCB",
                     Kind = "BarcodeScan",
                     IsEnable = true,
                     Action = new DelegateCommand(() => {
@@ -206,10 +206,11 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 }
             };
 
-            if (!_session.IsPANELViewEnabled)
-            {
+            if (_session.DisplayOption == Infrastructure.DisplayOptionEnum.PCB)
                 MenuButtons.RemoveAt(0);
-            }
+            if(_session.DisplayOption == Infrastructure.DisplayOptionEnum.PANEL)
+                MenuButtons.RemoveAt(1);
+
         }
 
         #endregion
@@ -219,10 +220,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         public void OnLoaded()
         {
             SetMenuItems();
-            if (_session.IsPANELViewEnabled)
+            if (_session.DisplayOption == Infrastructure.DisplayOptionEnum.BOTH)
                 _regionManager.RequestNavigate(RegionNames.MainViewRegion, ViewNames.PanelCheckView);
-            else
+            else if (_session.DisplayOption == Infrastructure.DisplayOptionEnum.PCB)
                 _regionManager.RequestNavigate(RegionNames.MainViewRegion, ViewNames.TraitmentView);
+            else
+                _regionManager.RequestNavigate(RegionNames.MainViewRegion, ViewNames.PanelCheckView);
         }
 
         public void OnUnloaded()

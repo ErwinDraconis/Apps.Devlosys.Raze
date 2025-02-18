@@ -244,6 +244,13 @@ namespace Apps.Devlosys.Infrastructure
         [LocalizedDescriptionAttribute("LabelTypeTSText", typeof(EnumsResource))] TS,
     }
 
+    public enum DisplayOptionEnum
+    {
+        BOTH,
+        PCB,
+        PANEL
+    }
+
     [TypeConverter(typeof(EnumDescriptionTypeConverter))]
     public enum PrintModeEnum
     {
