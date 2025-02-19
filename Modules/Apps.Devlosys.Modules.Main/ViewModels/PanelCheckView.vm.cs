@@ -6,6 +6,7 @@ using Apps.Devlosys.Infrastructure.Models;
 using Apps.Devlosys.Resources.I18N;
 using Apps.Devlosys.Services.Interfaces;
 using MaterialDesignThemes.Wpf;
+using MaterialDesignThemes.Wpf.Converters;
 using Prism.Commands;
 using Prism.Ioc;
 using Prism.Services.Dialogs;
@@ -163,7 +164,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
             string SvgFilePath, FinishGood = string.Empty;
             int TotalPCBs = 0;
-            if (!isSVGDataAvailable(panelsResult.First().SerialNumber, out SvgFilePath,out TotalPCBs,out FinishGood)/*"L38261835")*/)
+            if (!isSVGDataAvailable(panelsResult.First().SerialNumber, out SvgFilePath,out TotalPCBs,out FinishGood) /*"L38261835", out SvgFilePath, out TotalPCBs, out FinishGood)*/)
                 ProcessPanelWithoutSVG(panelsResult);
             else
                 ProcessPanelAndDisplaySVG(panelsResult, SvgFilePath, TotalPCBs, FinishGood);
@@ -171,79 +172,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         }
 
-        bool isSVGDataAvailable(string SerialNumber, out string SvgFilePath, out int TotalPCBs, out string FinishGood)
-        {
-            // Initialize the output parameters
-            SvgFilePath = string.Empty;
-            TotalPCBs = 0;
-            FinishGood = string.Empty;  
-
-            IsSVGFileFound = false;
-            if (string.IsNullOrEmpty(SerialNumber))
-                return false;
-
-            string _exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string _panelLayoutPath = Path.Combine(_exeDirectory, "PanelLayout");
-            string _svgFolderPath = Path.Combine(_panelLayoutPath, "SVG");
-            string _configFilePath = Path.Combine(_panelLayoutPath, "config.ini");
-
-            if (!Directory.Exists(_panelLayoutPath))
-                return false;
-
-            if (!Directory.Exists(_svgFolderPath))
-                return false;
-
-            if (!File.Exists(_configFilePath))
-            {
-                Log.Error($"Config file not found at {_configFilePath}");
-                return false;
-            }
-
-            var data = GetDataForLabel(SerialNumber);
-            if (data == null)
-            {
-                Log.Error("Missing required data in bin file");
-                return false;
-            }
-
-            // Read and parse config file
-            var configData = ReadIniFile(_configFilePath, data.FinGood);
-            if (!configData.ContainsKey(data.FinGood))
-            {
-                Log.Error("Missing required keys (SVG_File or PCB_Numbers) in config file");
-                return false;
-            }
-
-            var sectionData = configData[data.FinGood];
-
-            if (!sectionData.ContainsKey("SVG_File") || !sectionData.ContainsKey("PCB_Numbers"))
-            {
-                Log.Error("Missing required keys (SVG_File or PCB_Numbers) in config file");
-                return false;
-            }
-
-            // Set the SVG file path
-            SvgFilePath = Path.Combine(_svgFolderPath, sectionData["SVG_File"] + ".svg");
-
-            int pcbCount = 0;
-
-            // Try to parse PCB_Numbers
-            if (!int.TryParse(sectionData["PCB_Numbers"], out pcbCount) || pcbCount <= 0)
-            {
-                Log.Error("PCB_Numbers is not a valid positive number.");
-                return false;
-            }
-
-            // Set the total PCB count
-            TotalPCBs = pcbCount;
-            FinishGood = data.FinGood;
-            IsSVGFileFound = true;
-            return true;
-        }
-
-
-
-        private async void ProcessPanelWithoutSVG(List<PanelPositions> panelsResult)
+        private async Task ProcessPanelWithoutSVG(List<PanelPositions> panelsResult)
         {
             // Display panel layout in Gray
             Positions.AddRange(panelsResult);
@@ -292,83 +221,126 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
-        string statusToColor(int status)
+        private async Task ProcessPanelAndDisplaySVG(List<PanelPositions> panelsResult, string SvgPath, int TotalPCBs, string FinishGood)
         {
-            return status switch
+            // Load default SVG first
+            SVGFilePath = SvgPath;
+            Log.Information($"Loaded {panelsResult.Count} positions for SN [{SNR}]. Processing now...");
+
+            await Task.Run(async () =>
             {
-                0 => "Green",     // OK
-                1 => "OrangeRed", // NOK
-                2 => "DarkRed",   // Scrap
-                3 => "Gray",      // Initial state, pending test
-                10 => "Azure",     // Booking failed
-                _ => "Yellow"     // Unknown
-            };
+                string svgContent = File.ReadAllText(SvgPath);
+                int iCounter = 1;
+                string modifiedSvgPath = SvgPath.Replace(FinishGood, "TestResult_" + FinishGood);
+
+                foreach (var position in panelsResult)
+                {
+                    try
+                    {
+                        if (position == null)
+                        {
+                            Log.Warning($"A null position was found in panelsResult for SN [{SNR}]. Skipping...");
+                            continue;
+                        }
+#if DEBUG
+                        // Change the fill color dynamically
+                        string fillPattern = $"fill=\"[^\"]*\"(?=.*id=\"pcb_{iCounter}\")";
+                        string fillReplacement = $"fill=\"{statusToColor(position.Status)}\"";
+                        svgContent = Regex.Replace(svgContent, fillPattern, fillReplacement);
+
+                        // Extract PCB path data (using flexible pattern)
+                        string pathPattern = $"<path[^>]*d=\"([^\"]+)\"[^>]*id=\"pcb_{iCounter}\"";
+                        Match match = Regex.Match(svgContent, pathPattern);
+
+                        if (match.Success)
+                        {
+                            string pathData = match.Groups[1].Value;
+                            var (centerX, centerY) = CalculateCentroid(pathData);
+
+                            // Insert the serial number text at the centroid
+                            string textElement = $"<text x=\"{centerX}\" y=\"{centerY}\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">{position.SerialNumber}</text>";
+                            svgContent = Regex.Replace(svgContent, $"(<path[^>]*id=\"pcb_{iCounter}\"[^>]*>)", $"$1\n{textElement}");
+                        }
+
+                        // Save updated SVG
+                        File.WriteAllText(modifiedSvgPath, svgContent);
+
+                        // Notify UI on the main thread
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            SVGFilePath = null;
+                            SVGFilePath = modifiedSvgPath;
+                        });
+
+                        await Task.Delay(200); // Allow UI to refresh
+
+                        iCounter++;
+#else
+                    if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
+                    {
+                        Log.Information($"[START] ProcessBookingAsync: Processing SN [{position.SerialNumber}] at station [{_session.Station}].");
+                        await ProcessBookingAsync(position.SerialNumber);
+                    }
+                    else
+                    {
+                        Log.Warning($"SN [{position.SerialNumber}] has a failed iTAC status. Interlock window will be shown.");
+                        Positions.FirstOrDefault(x => x.SerialNumber == position.SerialNumber).DisplayStatus = (int)position.Status;
+                        iTAC_Check_SN_RSLT_ENUM status = Enum.IsDefined(typeof(iTAC_Check_SN_RSLT_ENUM), position.Status)
+                                                        ? (iTAC_Check_SN_RSLT_ENUM)position.Status
+                                                        : iTAC_Check_SN_RSLT_ENUM.PART_Unknown;
+
+                        string scrapMessage = $"{status} at position {position.PositionNumber} was found.";
+                        string dialogTitle = $"Panel Check - {status} Detected";
+                        _dialogService.ShowDialog(DialogNames.UnterlockFailDialog,
+                            new DialogParameters($"title={dialogTitle} &SNR={position.SerialNumber}&Description={scrapMessage} &CallerWindow=PanelCheckView"));
+                    }
+#endif
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"[EXCEPTION] SN [{position?.SerialNumber ?? "Unknown"}] at station [{_session.Station}] - Error: {ex.Message}\n{ex}");
+                        _dialogService.ShowOkDialog("Exception Occured", $"{ex.Message}", OkDialogType.Error);
+                    }
+                }
+            });
         }
 
-        private void ProcessPanelAndDisplaySVG(List<PanelPositions> panelsResult, string SvgPath, int TotalPCBs, string FinishGood)
+        private async Task UpdatePCBColorOnSVGFile(string SvgPath, string FinishGood, int iCounter, PanelPositions position)
         {
-            string svgContent = File.ReadAllText(SvgPath);
-
-            int iCounter = 1;
-            foreach (var position in panelsResult)
-            {
-                // Change the fill color
-                string pattern = $"fill=\"[^\"]*\"(?=.*id=\"pcb_{iCounter}\")";
-                string replacement = $"fill=\"{statusToColor(position.Status)}\"";
-                svgContent = Regex.Replace(svgContent, pattern, replacement);
-
-                // Find the PCB element and insert text
-                string pcbPattern = $"(<path[^>]+id=\"pcb_{iCounter}\"[^>]*>)";
-                string textElement = $"<text x=\"{100}\" y=\"{200}\" font-size=\"16\" fill=\"black\" text-anchor=\"middle\">{position.SerialNumber}</text>";
-
-                // Insert the text after the matching PCB path
-                svgContent = Regex.Replace(svgContent, pcbPattern, $"$1\n{textElement}");
-
-                iCounter++;
-            }
-
-            // Save the modified SVG
             string modifiedSvgPath = SvgPath.Replace(FinishGood, "TestResult_" + FinishGood);
-            File.WriteAllText(modifiedSvgPath, svgContent);
 
-            SVGFilePath = modifiedSvgPath;
-        }
+            string svgContent = File.ReadAllText(SvgPath);
+            // Change the fill color dynamically
+            string fillPattern = $"fill=\"[^\"]*\"(?=.*id=\"pcb_{iCounter}\")";
+            string fillReplacement = $"fill=\"{statusToColor(position.Status)}\"";
+            svgContent = Regex.Replace(svgContent, fillPattern, fillReplacement);
 
-        private (int, int) CalculateCentroid(string svgContent, int pcbIndex)
-        {
-            string pattern = $"<path[^>]+id=\"pcb_{pcbIndex}\"[^>]+d=\"([^\"]+)\"";
-            Match match = Regex.Match(svgContent, pattern);
+            // Extract PCB path data (using flexible pattern)
+            string pathPattern = $"<path[^>]*d=\"([^\"]+)\"[^>]*id=\"pcb_{iCounter}\"";
+            Match match = Regex.Match(svgContent, pathPattern);
 
             if (match.Success)
             {
                 string pathData = match.Groups[1].Value;
+                var (centerX, centerY) = CalculateCentroid(pathData);
 
-                // Extract all coordinates from 'd' attribute
-                string coordPattern = @"(\d+),(\d+)";
-                MatchCollection coordMatches = Regex.Matches(pathData, coordPattern);
-
-                if (coordMatches.Count > 0)
-                {
-                    int sumX = 0, sumY = 0;
-                    int pointCount = coordMatches.Count;
-
-                    foreach (Match coordMatch in coordMatches)
-                    {
-                        sumX += int.Parse(coordMatch.Groups[1].Value);
-                        sumY += int.Parse(coordMatch.Groups[2].Value);
-                    }
-
-                    // Calculate centroid (average of all points)
-                    int centerX = sumX / pointCount;
-                    int centerY = sumY / pointCount;
-
-                    return (centerX, centerY);
-                }
+                // Insert the serial number text at the centroid
+                string textElement = $"<text x=\"{centerX}\" y=\"{centerY}\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">{position.SerialNumber}</text>";
+                svgContent = Regex.Replace(svgContent, $"(<path[^>]*id=\"pcb_{iCounter}\"[^>]*>)", $"$1\n{textElement}");
             }
 
-            return (-1, -1); // Return invalid position if extraction fails
-        }
+            // Save updated SVG
+            File.WriteAllText(modifiedSvgPath, svgContent);
 
+            // Notify UI on the main thread
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                SVGFilePath = null;
+                SVGFilePath = modifiedSvgPath;
+            });
+
+
+        }
 
         private async Task ProcessBookingAsync(string SerialNumber)
         {
@@ -478,7 +450,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
-
         private async Task<(bool success, string message)> StartiTACBookingAsync(string snr)
         {
             (bool result, string[] outArgs, int code) = await _api.UploadStateAsync(_session.Station, snr, ["SERIAL_NUMBER_STATE"], null);
@@ -503,7 +474,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return (false, error);
             }
         }
-
 
         private async Task<(bool success, string message)> MesBookingAsync(string snr)
         {
@@ -584,62 +554,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         }
 
-        private BinData GetDataForLabel(string snr)
-        {
-            BinData data = null;
-            string line  = string.Empty;
-            bool founded = false;
-            string interSnr = string.Empty;
-
-            if (snr.Length < 15)
-                return null;
-
-            if (!string.IsNullOrEmpty(snr))
-            {
-                if (snr.Contains("_"))
-                    interSnr = snr.Between("_", "_");
-                else
-                    interSnr = snr.Substring(4, 10);
-            }
-
-
-            StreamReader file = new(AppDomain.CurrentDomain.BaseDirectory + "\\data\\bin.txt");
-            
-            while ((line = file.ReadLine()) != null)
-            {
-                string[] col = line.Split('|');
-                if (col.Length > 7)
-                {
-                    if (col[0] == interSnr)
-                    {
-                        data = new BinData()
-                        {
-                            Identification = col[0],
-                            PartNumberSFG = col[1],
-                            PartDescription = col[2],
-                            BinRef = col[3],
-                            HardwareRef = col[4],
-                            FinGood = col[5],
-                            Shipping = col[6],
-                            Quantity = col[7],
-                        };
-
-                        founded = true;
-
-                        break;
-                    }
-                }
-            }
-
-            if (!founded)
-            {
-                _dialogService.ShowOkDialog("Information", "No record found with this part number, try to add data in bin table ", OkDialogType.Warning);
-                Log.Error($"No record found for this SN [{snr}], try to add data in bin table ");
-            }
-
-            return data;
-        }
-
         public async Task<(bool success, int errCode, string errorDescription)> CheckPcbAsync(string snr)
         {
             (bool result, string errorDescription, int errorCode) = await _api.CheckSerialNumberStateAsync(_session.Station, snr);
@@ -670,17 +584,9 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         }
 
+        #endregion
 
-        public void OnLoaded()
-        {
-            OnFocusRequested("SNR");
-        }
-
-        public void OnUnloaded()
-        {
-
-        }
-
+        #region Helper methodes
 
         private static Dictionary<string, string> ReadIniFile(string filePath)
         {
@@ -702,7 +608,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             return configData;
         }
 
-        public static Dictionary<string, Dictionary<string, string>> ReadIniFile(string path, string section)
+        private static Dictionary<string, Dictionary<string, string>> ReadIniFile(string path, string section)
         {
             var result = new Dictionary<string, Dictionary<string, string>>();
             string currentSection = null;
@@ -754,7 +660,179 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
             return result;
         }
+
+        private bool isSVGDataAvailable(string SerialNumber, out string SvgFilePath, out int TotalPCBs, out string FinishGood)
+        {
+            // Initialize the output parameters
+            SvgFilePath = string.Empty;
+            TotalPCBs = 0;
+            FinishGood = string.Empty;
+
+            IsSVGFileFound = false;
+            if (string.IsNullOrEmpty(SerialNumber))
+                return false;
+
+            string _exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string _panelLayoutPath = Path.Combine(_exeDirectory, "PanelLayout");
+            string _svgFolderPath = Path.Combine(_panelLayoutPath, "SVG");
+            string _configFilePath = Path.Combine(_panelLayoutPath, "config.ini");
+
+            if (!Directory.Exists(_panelLayoutPath))
+                return false;
+
+            if (!Directory.Exists(_svgFolderPath))
+                return false;
+
+            if (!File.Exists(_configFilePath))
+            {
+                Log.Error($"Config file not found at {_configFilePath}");
+                return false;
+            }
+
+            var data = GetDataForLabel(SerialNumber);
+            if (data == null)
+            {
+                Log.Error("Missing required data in bin file");
+                return false;
+            }
+
+            // Read and parse config file
+            var configData = ReadIniFile(_configFilePath, data.FinGood);
+            if (!configData.ContainsKey(data.FinGood))
+            {
+                Log.Error("Missing required keys (SVG_File or PCB_Numbers) in config file");
+                return false;
+            }
+
+            var sectionData = configData[data.FinGood];
+
+            if (!sectionData.ContainsKey("SVG_File") || !sectionData.ContainsKey("PCB_Numbers"))
+            {
+                Log.Error("Missing required keys (SVG_File or PCB_Numbers) in config file");
+                return false;
+            }
+
+            // Set the SVG file path
+            SvgFilePath = Path.Combine(_svgFolderPath, sectionData["SVG_File"] + ".svg");
+
+            int pcbCount = 0;
+
+            // Try to parse PCB_Numbers
+            if (!int.TryParse(sectionData["PCB_Numbers"], out pcbCount) || pcbCount <= 0)
+            {
+                Log.Error("PCB_Numbers is not a valid positive number.");
+                return false;
+            }
+
+            // Set the total PCB count
+            TotalPCBs = pcbCount;
+            FinishGood = data.FinGood;
+            IsSVGFileFound = true;
+            return true;
+        }
+
+        private string statusToColor(int status)
+        {
+            return status switch
+            {
+                0 => "Green",     // OK
+                1 => "OrangeRed", // NOK
+                2 => "DarkRed",   // Scrap
+                3 => "Gray",      // Initial state, pending test
+                10 => "Azure",     // Booking failed
+                _ => "Yellow"     // Unknown
+            };
+        }
+
+        private (double, double) CalculateCentroid(string pathData)
+        {
+            var matches = Regex.Matches(pathData, @"(\d+\.?\d*),(\d+\.?\d*)");
+
+            double sumX = 0, sumY = 0;
+            int count = matches.Count;
+
+            if (count == 0) return (0, 0); // Avoid division by zero
+
+            foreach (Match match in matches)
+            {
+                sumX += double.Parse(match.Groups[1].Value);
+                sumY += double.Parse(match.Groups[2].Value);
+            }
+
+            double centerX = sumX / count;
+            double centerY = sumY / count;
+
+            return (Math.Round(centerX, 0), Math.Round(centerY, 0));
+        }
+
+        private BinData GetDataForLabel(string snr)
+        {
+            BinData data = null;
+            string line = string.Empty;
+            bool founded = false;
+            string interSnr = string.Empty;
+
+            if (snr.Length < 15)
+                return null;
+
+            if (!string.IsNullOrEmpty(snr))
+            {
+                if (snr.Contains("_"))
+                    interSnr = snr.Between("_", "_");
+                else
+                    interSnr = snr.Substring(4, 10);
+            }
+
+
+            StreamReader file = new(AppDomain.CurrentDomain.BaseDirectory + "\\data\\bin.txt");
+
+            while ((line = file.ReadLine()) != null)
+            {
+                string[] col = line.Split('|');
+                if (col.Length > 7)
+                {
+                    if (col[0] == interSnr)
+                    {
+                        data = new BinData()
+                        {
+                            Identification = col[0],
+                            PartNumberSFG = col[1],
+                            PartDescription = col[2],
+                            BinRef = col[3],
+                            HardwareRef = col[4],
+                            FinGood = col[5],
+                            Shipping = col[6],
+                            Quantity = col[7],
+                        };
+
+                        founded = true;
+
+                        break;
+                    }
+                }
+            }
+
+            if (!founded)
+            {
+                _dialogService.ShowOkDialog("Information", "No record found with this part number, try to add data in bin table ", OkDialogType.Warning);
+                Log.Error($"No record found for this SN [{snr}], try to add data in bin table ");
+            }
+
+            return data;
+        }
+
+        public void OnLoaded()
+        {
+            OnFocusRequested("SNR");
+        }
+
+        public void OnUnloaded()
+        {
+
+        }
+
         #endregion
+
 
     }
 
