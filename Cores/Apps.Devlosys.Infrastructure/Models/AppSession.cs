@@ -35,10 +35,10 @@ namespace Apps.Devlosys.Infrastructure.Models
         private const string DATE_FORMAT_NAME = "dateFormat";
         private const string TRAITEMENT_NAME = "TRAIT";
         private const string INTER_LOCK_COMPort = "COMPortIL";
-        private const string BaudRatesIL      = "BaudRatesIL";
-        private const string StopBitsIL       = "StopBitsIL";
-        private const string ParitiesIL       = "ParitiesIL";
-        private const string DataBitsIL       = "DataBitsIL";
+        private const string BaudRates_INTER_LOCK = "BaudRatesIL";
+        private const string StopBits_INTER_LOCK = "StopBitsIL";
+        private const string Parities_INTER_LOCK = "ParitiesIL";
+        private const string DataBits_INTER_LOCK = "DataBitsIL";
 
         public AppSession()
         {
@@ -225,26 +225,26 @@ namespace Apps.Devlosys.Infrastructure.Models
 
         public string BaudRatesInterLock
         {
-            get => configuration.AppSettings.Settings[BaudRatesIL].Value;
-            set => configuration.AppSettings.Settings[BaudRatesIL].Value = value;
+            get => configuration.AppSettings.Settings[BaudRates_INTER_LOCK].Value;
+            set => configuration.AppSettings.Settings[BaudRates_INTER_LOCK].Value = value;
         }
 
         public string StopBitsInterLock
         {
-            get => configuration.AppSettings.Settings[StopBitsIL].Value;
-            set => configuration.AppSettings.Settings[StopBitsIL].Value = value;
+            get => configuration.AppSettings.Settings[StopBits_INTER_LOCK].Value;
+            set => configuration.AppSettings.Settings[StopBits_INTER_LOCK].Value = value;
         }
 
         public string ParitiesInterLock
         {
-            get => configuration.AppSettings.Settings[ParitiesIL].Value;
-            set => configuration.AppSettings.Settings[ParitiesIL].Value = value;
+            get => configuration.AppSettings.Settings[Parities_INTER_LOCK].Value;
+            set => configuration.AppSettings.Settings[Parities_INTER_LOCK].Value = value;
         }
 
         public string DataBitsInterLock
         {
-            get => configuration.AppSettings.Settings[DataBitsIL].Value;
-            set => configuration.AppSettings.Settings[DataBitsIL].Value = value;
+            get => configuration.AppSettings.Settings[DataBits_INTER_LOCK].Value;
+            set => configuration.AppSettings.Settings[DataBits_INTER_LOCK].Value = value;
         }
         #endregion
 

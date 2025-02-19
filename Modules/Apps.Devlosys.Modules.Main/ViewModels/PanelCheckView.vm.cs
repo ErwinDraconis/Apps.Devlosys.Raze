@@ -11,6 +11,7 @@ using Prism.Ioc;
 using Prism.Services.Dialogs;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -80,6 +81,21 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             set => SetProperty(ref _isLoadingGifVisible, value);
         }
 
+        private bool _isSVGFileFound = false;
+
+        public bool IsSVGFileFound
+        {
+            get => _isSVGFileFound;
+            set => SetProperty(ref _isSVGFileFound, value);
+        }
+
+        private string _svgFilePath;
+        public string SVGFilePath
+        {
+            get => _svgFilePath;
+            set => SetProperty(ref _svgFilePath, value);
+        }
+
         public ISnackbarMessageQueue GlobalMessageQueue { get; set; }
 
         #endregion
@@ -145,6 +161,90 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return;
             }
 
+            string SvgFilePath, FinishGood = string.Empty;
+            int TotalPCBs = 0;
+            if (!isSVGDataAvailable(panelsResult.First().SerialNumber, out SvgFilePath,out TotalPCBs,out FinishGood)/*"L38261835")*/)
+                ProcessPanelWithoutSVG(panelsResult);
+            else
+                ProcessPanelAndDisplaySVG(panelsResult, SvgFilePath, TotalPCBs, FinishGood);
+
+
+        }
+
+        bool isSVGDataAvailable(string SerialNumber, out string SvgFilePath, out int TotalPCBs, out string FinishGood)
+        {
+            // Initialize the output parameters
+            SvgFilePath = string.Empty;
+            TotalPCBs = 0;
+            FinishGood = string.Empty;  
+
+            IsSVGFileFound = false;
+            if (string.IsNullOrEmpty(SerialNumber))
+                return false;
+
+            string _exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string _panelLayoutPath = Path.Combine(_exeDirectory, "PanelLayout");
+            string _svgFolderPath = Path.Combine(_panelLayoutPath, "SVG");
+            string _configFilePath = Path.Combine(_panelLayoutPath, "config.ini");
+
+            if (!Directory.Exists(_panelLayoutPath))
+                return false;
+
+            if (!Directory.Exists(_svgFolderPath))
+                return false;
+
+            if (!File.Exists(_configFilePath))
+            {
+                Log.Error($"Config file not found at {_configFilePath}");
+                return false;
+            }
+
+            var data = GetDataForLabel(SerialNumber);
+            if (data == null)
+            {
+                Log.Error("Missing required data in bin file");
+                return false;
+            }
+
+            // Read and parse config file
+            var configData = ReadIniFile(_configFilePath, data.FinGood);
+            if (!configData.ContainsKey(data.FinGood))
+            {
+                Log.Error("Missing required keys (SVG_File or PCB_Numbers) in config file");
+                return false;
+            }
+
+            var sectionData = configData[data.FinGood];
+
+            if (!sectionData.ContainsKey("SVG_File") || !sectionData.ContainsKey("PCB_Numbers"))
+            {
+                Log.Error("Missing required keys (SVG_File or PCB_Numbers) in config file");
+                return false;
+            }
+
+            // Set the SVG file path
+            SvgFilePath = Path.Combine(_svgFolderPath, sectionData["SVG_File"] + ".svg");
+
+            int pcbCount = 0;
+
+            // Try to parse PCB_Numbers
+            if (!int.TryParse(sectionData["PCB_Numbers"], out pcbCount) || pcbCount <= 0)
+            {
+                Log.Error("PCB_Numbers is not a valid positive number.");
+                return false;
+            }
+
+            // Set the total PCB count
+            TotalPCBs = pcbCount;
+            FinishGood = data.FinGood;
+            IsSVGFileFound = true;
+            return true;
+        }
+
+
+
+        private async void ProcessPanelWithoutSVG(List<PanelPositions> panelsResult)
+        {
             // Display panel layout in Gray
             Positions.AddRange(panelsResult);
             Log.Information($"Loaded {panelsResult.Count} positions for SN [{SNR}]. Processing now...");
@@ -190,7 +290,83 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     _dialogService.ShowOkDialog("Exception Occured", $"{ex.Message}", OkDialogType.Error);
                 }
             }
+        }
 
+        string statusToColor(int status)
+        {
+            return status switch
+            {
+                0 => "Green",     // OK
+                1 => "OrangeRed", // NOK
+                2 => "DarkRed",   // Scrap
+                3 => "Gray",      // Initial state, pending test
+                10 => "Azure",     // Booking failed
+                _ => "Yellow"     // Unknown
+            };
+        }
+
+        private void ProcessPanelAndDisplaySVG(List<PanelPositions> panelsResult, string SvgPath, int TotalPCBs, string FinishGood)
+        {
+            string svgContent = File.ReadAllText(SvgPath);
+
+            int iCounter = 1;
+            foreach (var position in panelsResult)
+            {
+                // Change the fill color
+                string pattern = $"fill=\"[^\"]*\"(?=.*id=\"pcb_{iCounter}\")";
+                string replacement = $"fill=\"{statusToColor(position.Status)}\"";
+                svgContent = Regex.Replace(svgContent, pattern, replacement);
+
+                // Find the PCB element and insert text
+                string pcbPattern = $"(<path[^>]+id=\"pcb_{iCounter}\"[^>]*>)";
+                string textElement = $"<text x=\"{100}\" y=\"{200}\" font-size=\"16\" fill=\"black\" text-anchor=\"middle\">{position.SerialNumber}</text>";
+
+                // Insert the text after the matching PCB path
+                svgContent = Regex.Replace(svgContent, pcbPattern, $"$1\n{textElement}");
+
+                iCounter++;
+            }
+
+            // Save the modified SVG
+            string modifiedSvgPath = SvgPath.Replace(FinishGood, "TestResult_" + FinishGood);
+            File.WriteAllText(modifiedSvgPath, svgContent);
+
+            SVGFilePath = modifiedSvgPath;
+        }
+
+        private (int, int) CalculateCentroid(string svgContent, int pcbIndex)
+        {
+            string pattern = $"<path[^>]+id=\"pcb_{pcbIndex}\"[^>]+d=\"([^\"]+)\"";
+            Match match = Regex.Match(svgContent, pattern);
+
+            if (match.Success)
+            {
+                string pathData = match.Groups[1].Value;
+
+                // Extract all coordinates from 'd' attribute
+                string coordPattern = @"(\d+),(\d+)";
+                MatchCollection coordMatches = Regex.Matches(pathData, coordPattern);
+
+                if (coordMatches.Count > 0)
+                {
+                    int sumX = 0, sumY = 0;
+                    int pointCount = coordMatches.Count;
+
+                    foreach (Match coordMatch in coordMatches)
+                    {
+                        sumX += int.Parse(coordMatch.Groups[1].Value);
+                        sumY += int.Parse(coordMatch.Groups[2].Value);
+                    }
+
+                    // Calculate centroid (average of all points)
+                    int centerX = sumX / pointCount;
+                    int centerY = sumY / pointCount;
+
+                    return (centerX, centerY);
+                }
+            }
+
+            return (-1, -1); // Return invalid position if extraction fails
         }
 
 
@@ -413,7 +589,10 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             BinData data = null;
             string line  = string.Empty;
             bool founded = false;
-            string interSnr = string.Empty; 
+            string interSnr = string.Empty;
+
+            if (snr.Length < 15)
+                return null;
 
             if (!string.IsNullOrEmpty(snr))
             {
@@ -502,6 +681,79 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
 
         }
 
+
+        private static Dictionary<string, string> ReadIniFile(string filePath)
+        {
+            var configData = new Dictionary<string, string>();
+
+            foreach (var line in File.ReadAllLines(filePath))
+            {
+                // Ignore empty lines and comments
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith(";")) continue;
+
+                // Extract key-value pairs
+                var parts = line.Split(new char[] { '=' }, 2);
+                if (parts.Length == 2)
+                {
+                    configData[parts[0].Trim()] = parts[1].Trim();
+                }
+            }
+
+            return configData;
+        }
+
+        public static Dictionary<string, Dictionary<string, string>> ReadIniFile(string path, string section)
+        {
+            var result = new Dictionary<string, Dictionary<string, string>>();
+            string currentSection = null;
+            Dictionary<string, string> sectionData = null;
+
+            try
+            {
+                using (var reader = new StreamReader(path))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        line = line.Trim();
+
+                        // Skip comments or empty lines
+                        if (string.IsNullOrEmpty(line) || line.StartsWith(";") || line.StartsWith("#"))
+                            continue;
+
+                        // Detect section headers
+                        if (line.StartsWith("[") && line.EndsWith("]"))
+                        {
+                            currentSection = line.Trim('[', ']');
+                            sectionData = new Dictionary<string, string>();
+
+                            // Add section to result if it matches the target section
+                            if (currentSection.Equals(section, StringComparison.OrdinalIgnoreCase))
+                            {
+                                result[currentSection] = sectionData;
+                            }
+                        }
+                        // Parse key-value pairs
+                        else if (currentSection != null && sectionData != null)
+                        {
+                            var splitIndex = line.IndexOf('=');
+                            if (splitIndex > 0)
+                            {
+                                var key = line.Substring(0, splitIndex).Trim();
+                                var value = line.Substring(splitIndex + 1).Trim();
+                                sectionData[key] = value;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error reading INI file: " + ex.Message);
+            }
+
+            return result;
+        }
         #endregion
 
     }

@@ -7,12 +7,14 @@
              xmlns:resx="clr-namespace:Apps.Devlosys.Resources.I18N;assembly=Apps.Devlosys.Resources"
              xmlns:ctrl="clr-namespace:Apps.Devlosys.Controls.Converters;assembly=Apps.Devlosys.Controls"
              xmlns:wpfAnimatedGif="http://wpfanimatedgif.codeplex.com"
+             xmlns:svg="http://sharpvectors.codeplex.com/svgc/"
              x:Name="_window">
 
     <UserControl.Resources>
         <Thickness x:Key="Space" Left="0" Top="0" Right="0" Bottom="20" />
         <ctrl:StatusToColorConverter x:Key="StatusToColorConverter"/>
         <ctrl:StatusToStringConverter x:Key="StatusToStringConverter"/>
+        <ctrl:BoolToVisConverter x:Key="BoolToVisConverter"/>
     </UserControl.Resources>
 
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
@@ -59,7 +61,7 @@
                             </StackPanel>
                         </Grid>
 
-                        <Grid Grid.Row="1">
+                        <Grid Grid.Row="1" Visibility="{Binding IsSVGFileFound, Converter={StaticResource BoolToVisConverter}, ConverterParameter=SVGNotFound}">
                             <ItemsControl ItemsSource="{Binding Positions}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -97,6 +99,10 @@
                             </ItemsControl>
                         </Grid>
 
+                        <Grid Grid.Row="1" Visibility="{Binding IsSVGFileFound, Converter={StaticResource BoolToVisConverter}, ConverterParameter=SVGFound}">
+                            <svg:SvgViewbox x:Name="SvgContainer" Source="{Binding SVGFilePath}" Stretch="Uniform"/>
+                        </Grid>
+                        
                     </Grid>
                 </wpf:Card>
             </Grid>

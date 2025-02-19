@@ -463,7 +463,7 @@ namespace Apps.Devlosys.Services
 
                     PositionNumber = i + 1,
 
-                    SerialNumber = "99999_99999_99999" + random.Next(0, 1000).ToString(),
+                    SerialNumber = "L0000L90191506774654545" + random.Next(0, 1000).ToString(),
 
                     Status = random.Next(0, 4),
                     DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.PART_PENDING,
