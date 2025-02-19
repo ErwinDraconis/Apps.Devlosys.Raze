@@ -86,7 +86,8 @@
 
                                                 <TextBlock Text="{Binding SerialNumber}" FontSize="14" FontWeight="Bold" 
                                                        HorizontalAlignment="Center"  VerticalAlignment="Bottom"  Grid.Row="2" 
-                                                       Margin="5"/>
+                                                       Margin="5">
+                                                </TextBlock>
 
 
                                             </Grid>

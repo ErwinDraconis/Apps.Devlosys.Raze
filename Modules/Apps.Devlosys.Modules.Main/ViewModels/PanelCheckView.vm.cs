@@ -179,6 +179,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                             new DialogParameters($"title={dialogTitle} &SNR={position.SerialNumber}&Description={scrapMessage} &CallerWindow=PanelCheckView"));
                     }
 #else
+                    // Display Real Panel
                     Positions.FirstOrDefault(x => x.SerialNumber == position.SerialNumber).DisplayStatus = (int)position.Status;
                     await Task.Delay(300);
 #endif
