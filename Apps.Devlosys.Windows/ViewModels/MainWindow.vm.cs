@@ -14,7 +14,7 @@ namespace Apps.Devlosys.Windows.ViewModels
         private readonly IRegionManager _regionManager;
         private readonly IIMSApi _api;
 
-        private string _title = "ViBPAD v1.0.13";
+        private string _title = "ViBPAD v1.1.0";
 
         #endregion
 

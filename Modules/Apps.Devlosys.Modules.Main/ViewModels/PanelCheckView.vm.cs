@@ -35,6 +35,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
         private readonly IIMSApi _api;
         private AppSession _session;
 
+        private int SN_FONT_SIZE = 12;
+        private string PRODUCT_NAME = string.Empty;
         #endregion
 
         #region Constructor
@@ -162,20 +164,20 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return;
             }
 
+            // Display panel layout in Gray
+            Positions.AddRange(panelsResult);
+            
             string SvgFilePath, FinishGood = string.Empty;
             int TotalPCBs = 0;
-            if (!isSVGDataAvailable(panelsResult.First().SerialNumber, out SvgFilePath,out TotalPCBs,out FinishGood) /*"L38261835", out SvgFilePath, out TotalPCBs, out FinishGood)*/)
-                ProcessPanelWithoutSVG(panelsResult);
+            if (!isSVGDataAvailable(panelsResult.First().SerialNumber, out SvgFilePath,out TotalPCBs,out FinishGood))
+                await ProcessPanelAsync(panelsResult);
             else
-                ProcessPanelAndDisplaySVG(panelsResult, SvgFilePath, TotalPCBs, FinishGood);
-
+                await ProcessPanelAndDisplaySVGAsync(panelsResult, SvgFilePath, TotalPCBs, FinishGood);
 
         }
 
-        private async Task ProcessPanelWithoutSVG(List<PanelPositions> panelsResult)
+        private async Task ProcessPanelAsync(List<PanelPositions> panelsResult)
         {
-            // Display panel layout in Gray
-            Positions.AddRange(panelsResult);
             Log.Information($"Loaded {panelsResult.Count} positions for SN [{SNR}]. Processing now...");
 
             // Loop through all PCBs and perform iTAC and MES booking on OK parts,Scrap or Failed parts will be blocked (Interlock)
@@ -192,7 +194,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                     {
                         Log.Information($"[START] ProcessBookingAsync: Processing SN [{position.SerialNumber}] at station [{_session.Station}].");
-                        await ProcessBookingAsync(position.SerialNumber);
+                        var Booking_Rslt = await ProcessBookingAsync(position.SerialNumber);
+                        Positions.FirstOrDefault(x => x.SerialNumber == position.SerialNumber).DisplayStatus = (int)Booking_Rslt;
                     }
                     else
                     {
@@ -221,7 +224,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
         }
 
-        private async Task ProcessPanelAndDisplaySVG(List<PanelPositions> panelsResult, string SvgPath, int TotalPCBs, string FinishGood)
+        private async Task ProcessPanelAndDisplaySVGAsync(List<PanelPositions> panelsResult, string SvgPath, int TotalPCBs, string FinishGood)
         {
             // Load default SVG first
             SVGFilePath = SvgPath;
@@ -231,7 +234,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             {
                 string svgContent = File.ReadAllText(SvgPath);
                 int iCounter = 1;
-                string modifiedSvgPath = SvgPath.Replace(FinishGood, "TestResult_" + FinishGood);
+                string modifiedSvgPath = SvgPath.Replace(".svg", "_TestResult.svg");
 
                 foreach (var position in panelsResult)
                 {
@@ -240,32 +243,14 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         if (position == null)
                         {
                             Log.Warning($"A null position was found in panelsResult for SN [{SNR}]. Skipping...");
+                            iCounter++;
                             continue;
                         }
 #if DEBUG
-                        // Change the fill color dynamically
-                        string fillPattern = $"fill=\"[^\"]*\"(?=.*id=\"pcb_{iCounter}\")";
-                        string fillReplacement = $"fill=\"{statusToColor(position.Status)}\"";
-                        svgContent = Regex.Replace(svgContent, fillPattern, fillReplacement);
+                        svgContent = await UpdatePCBColorOnSVGFile(svgContent, iCounter, position);
 
-                        // Extract PCB path data (using flexible pattern)
-                        string pathPattern = $"<path[^>]*d=\"([^\"]+)\"[^>]*id=\"pcb_{iCounter}\"";
-                        Match match = Regex.Match(svgContent, pathPattern);
-
-                        if (match.Success)
-                        {
-                            string pathData = match.Groups[1].Value;
-                            var (centerX, centerY) = CalculateCentroid(pathData);
-
-                            // Insert the serial number text at the centroid
-                            string textElement = $"<text x=\"{centerX}\" y=\"{centerY}\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">{position.SerialNumber}</text>";
-                            svgContent = Regex.Replace(svgContent, $"(<path[^>]*id=\"pcb_{iCounter}\"[^>]*>)", $"$1\n{textElement}");
-                        }
-
-                        // Save updated SVG
                         File.WriteAllText(modifiedSvgPath, svgContent);
 
-                        // Notify UI on the main thread
                         await Application.Current.Dispatcher.InvokeAsync(() =>
                         {
                             SVGFilePath = null;
@@ -279,7 +264,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     if (position.Status == (int)iTAC_Check_SN_RSLT_ENUM.PART_OK)
                     {
                         Log.Information($"[START] ProcessBookingAsync: Processing SN [{position.SerialNumber}] at station [{_session.Station}].");
-                        await ProcessBookingAsync(position.SerialNumber);
+                        var Booking_Rslt = await ProcessBookingAsync(position.SerialNumber);
+                        Positions.FirstOrDefault(x => x.SerialNumber == position.SerialNumber).DisplayStatus = (int)Booking_Rslt;
                     }
                     else
                     {
@@ -294,6 +280,22 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         _dialogService.ShowDialog(DialogNames.UnterlockFailDialog,
                             new DialogParameters($"title={dialogTitle} &SNR={position.SerialNumber}&Description={scrapMessage} &CallerWindow=PanelCheckView"));
                     }
+
+
+                    // update color on SVG file
+                    svgContent = await UpdatePCBColorOnSVGFile(svgContent, iCounter, position);
+
+                    File.WriteAllText(modifiedSvgPath, svgContent);
+
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        SVGFilePath = null;
+                        SVGFilePath = modifiedSvgPath;
+                    });
+
+                    iCounter++;
+                    await Task.Delay(50); // Allow UI to refresh
+
 #endif
                     }
                     catch (Exception ex)
@@ -305,44 +307,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             });
         }
 
-        private async Task UpdatePCBColorOnSVGFile(string SvgPath, string FinishGood, int iCounter, PanelPositions position)
-        {
-            string modifiedSvgPath = SvgPath.Replace(FinishGood, "TestResult_" + FinishGood);
-
-            string svgContent = File.ReadAllText(SvgPath);
-            // Change the fill color dynamically
-            string fillPattern = $"fill=\"[^\"]*\"(?=.*id=\"pcb_{iCounter}\")";
-            string fillReplacement = $"fill=\"{statusToColor(position.Status)}\"";
-            svgContent = Regex.Replace(svgContent, fillPattern, fillReplacement);
-
-            // Extract PCB path data (using flexible pattern)
-            string pathPattern = $"<path[^>]*d=\"([^\"]+)\"[^>]*id=\"pcb_{iCounter}\"";
-            Match match = Regex.Match(svgContent, pathPattern);
-
-            if (match.Success)
-            {
-                string pathData = match.Groups[1].Value;
-                var (centerX, centerY) = CalculateCentroid(pathData);
-
-                // Insert the serial number text at the centroid
-                string textElement = $"<text x=\"{centerX}\" y=\"{centerY}\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">{position.SerialNumber}</text>";
-                svgContent = Regex.Replace(svgContent, $"(<path[^>]*id=\"pcb_{iCounter}\"[^>]*>)", $"$1\n{textElement}");
-            }
-
-            // Save updated SVG
-            File.WriteAllText(modifiedSvgPath, svgContent);
-
-            // Notify UI on the main thread
-            await Application.Current.Dispatcher.InvokeAsync(() =>
-            {
-                SVGFilePath = null;
-                SVGFilePath = modifiedSvgPath;
-            });
-
-
-        }
-
-        private async Task ProcessBookingAsync(string SerialNumber)
+        private async Task<iTAC_Check_SN_RSLT_ENUM> ProcessBookingAsync(string SerialNumber)
         {
             bool loop = false;
             int retryCount = 0;
@@ -363,8 +328,8 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     if (success)
                     {
                         Log.Information($"[SUCCESS] iTAC booking for SN [{SerialNumber}] completed successfully.");
-                        Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.PART_OK;
-                        return;
+                        //UpdatePCBColorOnThePanel(SerialNumber, iTAC_Check_SN_RSLT_ENUM.PART_OK);
+                        return iTAC_Check_SN_RSLT_ENUM.PART_OK;
                     }
                     else
                     {
@@ -373,17 +338,13 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         _dialogService.ShowConfirmation("Re-try iTAC booking",
                             $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
                             OnConfirm: () => { loop = true; },
-                            OnCancel: () =>
-                            {
-                                Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.BOOKING_OP_FAILED;
-                                loop = false;
-                            }
+                            OnCancel: () => { loop = false; }
                         );
                         if (!loop) break;
                     }
                 }
                 Log.Warning($"[EXIT] iTAC booking for SN [{SerialNumber}] was not completed after {retryCount} attempts.");
-                return;
+                return iTAC_Check_SN_RSLT_ENUM.BOOKING_OP_FAILED;
             }
 
             // Set up retry logic for MES booking  
@@ -410,9 +371,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                         {
                             Log.Information($"[SUCCESS] iTAC booking for SN [{SerialNumber}] succeeded after MES.");
                             await _api.LockSerialAsync(_session.Station, SerialNumber);
-                            Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.PART_OK;
-
-                            return;
+                            return iTAC_Check_SN_RSLT_ENUM.PART_OK;
                         }
                         else
                         {
@@ -421,11 +380,7 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                             _dialogService.ShowConfirmation("Re-try iTAC booking",
                                 $"iTAC Booking Failed.\r\n iTAC booking for {SerialNumber} failed, reason: {message}. \r\n Do you want to retry?",
                                 OnConfirm: () => { loop = true; },
-                                OnCancel: () =>
-                                {
-                                    Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.BOOKING_OP_FAILED;
-                                    loop = false;
-                                }
+                                 OnCancel: () => { loop = false; }
                             );
                             if (!loop) break;
                         }
@@ -439,15 +394,13 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                     _dialogService.ShowConfirmation("Re-try MES booking",
                         $"MES Booking Failed.\r\n MES booking for {SerialNumber} failed ,reason: {message}. Do you want to retry?",
                         OnConfirm: () => { loop = true; },
-                        OnCancel: () =>
-                        {
-                            Positions.FirstOrDefault(x => x.SerialNumber == SerialNumber).DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.BOOKING_OP_FAILED;
-                            loop = false;
-                        }
+                        OnCancel: () =>  { loop = false; }
                     );
                     if (!loop) break;
                 }
             }
+
+            return iTAC_Check_SN_RSLT_ENUM.BOOKING_OP_FAILED;
         }
 
         private async Task<(bool success, string message)> StartiTACBookingAsync(string snr)
@@ -521,7 +474,6 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 return (false, $"MES booking for {snr}: Failed, error : {message}");
             }
         }
-
 
         private async Task<(bool success, string message)> MesSavingProductAsync(string snr)
         {
@@ -715,6 +667,12 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             // Set the SVG file path
             SvgFilePath = Path.Combine(_svgFolderPath, sectionData["SVG_File"] + ".svg");
 
+            if(!File.Exists(SvgFilePath))
+            {
+                Log.Error("Defined SVG file does not exist in the SVG folder, SVG : " + SvgFilePath);
+                return false;
+            }
+
             int pcbCount = 0;
 
             // Try to parse PCB_Numbers
@@ -723,6 +681,10 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 Log.Error("PCB_Numbers is not a valid positive number.");
                 return false;
             }
+
+            int.TryParse(sectionData["SN_FONT_SIZE"], out SN_FONT_SIZE);
+            PRODUCT_NAME = sectionData["PRODUCT_NAME"];
+           
 
             // Set the total PCB count
             TotalPCBs = pcbCount;
@@ -741,6 +703,19 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
                 3 => "Gray",      // Initial state, pending test
                 10 => "Azure",     // Booking failed
                 _ => "Yellow"     // Unknown
+            };
+        }
+
+        private string statusToMsgStr(int status)
+        {
+            return status switch
+            {
+                0 => "Pass",     
+                1 => "Fail", 
+                2 => "Scrap",   
+                3 => "Pending",     
+                10 => "MES or ITAC Failed",     
+                _ => "Unknown"     
             };
         }
 
@@ -819,6 +794,30 @@ namespace Apps.Devlosys.Modules.Main.ViewModels
             }
 
             return data;
+        }
+
+        private async Task<string> UpdatePCBColorOnSVGFile(string svgContent, int iCounter, PanelPositions position)
+        {
+            // Change the fill color dynamically
+            string fillPattern = $"fill=\"[^\"]*\"(?=.*id=\"pcb_{iCounter}\")";
+            string fillReplacement = $"fill=\"{statusToColor(position.DisplayStatus)}\"";
+            svgContent = Regex.Replace(svgContent, fillPattern, fillReplacement);
+
+            // Extract PCB path data (using flexible pattern)
+            string pathPattern = $"<path[^>]*d=\"([^\"]+)\"[^>]*id=\"pcb_{iCounter}\"";
+            Match match = Regex.Match(svgContent, pathPattern);
+
+            if (match.Success)
+            {
+                string pathData = match.Groups[1].Value;
+                var (centerX, centerY) = CalculateCentroid(pathData);
+
+                // Insert the serial number text at the centroid
+                string textElement = $"<text x=\"{centerX}\" y=\"{centerY}\" font-size=\"{SN_FONT_SIZE}\" fill=\"black\" text-anchor=\"middle\"> [{position.PositionNumber}]  - [{statusToMsgStr(position.Status)}] - {position.SerialNumber}</text>";
+                svgContent = Regex.Replace(svgContent, $"(<path[^>]*id=\"pcb_{iCounter}\"[^>]*>)", $"$1\n{textElement}");
+            }
+
+            return svgContent;
         }
 
         public void OnLoaded()

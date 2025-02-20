@@ -100,7 +100,10 @@
                         </Grid>
 
                         <Grid Grid.Row="1" Visibility="{Binding IsSVGFileFound, Converter={StaticResource BoolToVisConverter}, ConverterParameter=SVGFound}">
-                            <svg:SvgViewbox x:Name="SvgContainer" Source="{Binding SVGFilePath, UpdateSourceTrigger=PropertyChanged}" Stretch="Uniform"/>
+                            <Border BorderThickness="1" BorderBrush="Black" >
+                                <svg:SvgViewbox x:Name="SvgContainer" Source="{Binding SVGFilePath, UpdateSourceTrigger=PropertyChanged}" Stretch="Uniform" Margin="0 5 0 5"/>
+                            </Border>
+                            
                         </Grid>
                         
                     </Grid>

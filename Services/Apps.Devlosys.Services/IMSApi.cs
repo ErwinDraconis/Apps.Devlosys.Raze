@@ -453,20 +453,20 @@ namespace Apps.Devlosys.Services
             List<PanelPositions> panelRslt = new List<PanelPositions>();
 
 #if DEBUG
-            var fictiveNumberOfBoards = new Random().Next(5, 16);
-            Random random = new Random();
+            var fictiveNumberOfBoards = new Random().Next(12, 16);
+            Random random = new Random();int rnd = 0;
             for (int i = 0; i < fictiveNumberOfBoards; i++)
             {
+                rnd = random.Next(0, 2);
                 panelRslt.Add(new PanelPositions
-
                 {
 
                     PositionNumber = i + 1,
 
-                    SerialNumber = "L0000L90191506774654545" + random.Next(0, 1000).ToString(),
+                    SerialNumber = "L0000L90192055774654545" + random.Next(0, 1000).ToString(),
 
-                    Status = random.Next(0, 4),
-                    DisplayStatus = (int)iTAC_Check_SN_RSLT_ENUM.PART_PENDING,
+                    Status = rnd,
+                    DisplayStatus = rnd,//(int)iTAC_Check_SN_RSLT_ENUM.PART_PENDING,
 
                 });
                 await Task.Delay(100);
